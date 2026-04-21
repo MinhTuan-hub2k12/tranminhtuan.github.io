@@ -1,11 +1,338 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-    <title>Trang web của Tuấn đẹp zai</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Game Đoán Số | MinhTuan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+
+        .message-area {
+            background: #f0f4ff;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #1e3c72;
+            margin-bottom: 10px;
+        }
+
+        .attempt {
+            color: #2a5298;
+            font-size: 1.1em;
+        }
+
+        input {
+            width: 80%;
+            padding: 12px;
+            font-size: 1.2em;
+            text-align: center;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #2a5298;
+            box-shadow: 0 0 10px rgba(42,82,152,0.2);
+        }
+
+        button {
+            background: #2a5298;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1em;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 5px;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        button:hover {
+            background: #1e3c72;
+            transform: scale(1.05);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .reset-btn {
+            background: #e74c3c;
+        }
+
+        .reset-btn:hover {
+            background: #c0392b;
+        }
+
+        .history {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 15px;
+            font-size: 0.9em;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .history-title {
+            font-weight: bold;
+            color: #1e3c72;
+            margin-bottom: 10px;
+        }
+
+        .history-list {
+            list-style: none;
+            color: #555;
+        }
+
+        .history-list li {
+            padding: 3px 0;
+        }
+
+        footer {
+            margin-top: 25px;
+            font-size: 0.8em;
+            color: #999;
+        }
+    </style>
 </head>
 <body>
-    <h1>Chào mừng đến với trang web của Tuấn đẹp zai!</h1>
-    <p>Biết bà cơ rank ma không.</p>
-    <p>Bà cơ rank ma nhất thế giới</p>
+
+<div class="game-container">
+    <h1>🎲 Game Đoán Số</h1>
+    <div class="subtitle">Máy tính đã chọn 1 số từ 1 → 100</div>
+
+    <div class="message-area">
+        <div class="message" id="message">🔮 Nhập số dự đoán của bạn!</div>
+        <div class="attempt" id="attempt">📊 Số lần đoán: 0</div>
+    </div>
+
+    <input type="number" id="guessInput" placeholder="Nhập số từ 1 đến 100" min="1" max="100">
+    <br>
+    <button id="guessBtn">🎯 Đoán ngay!</button>
+    <button id="resetBtn" class="reset-btn">🔄 Chơi lại</button>
+
+    <div class="history">
+        <div class="history-title">📜 Lịch sử đoán</div>
+        <ul class="history-list" id="historyList">
+            <li>✨ Chưa có lượt đoán nào</li>
+        </ul>
+    </div>
+    <footer>💡 Gợi ý: số càng gần, mình sẽ bảo "nóng hơn" đó!</footer>
+</div>
+
+<script>
+    // === BIẾN TOÀN CỤC ===
+    let secretNumber = Math.floor(Math.random() * 100) + 1;
+    let attempts = 0;
+    let history = [];
+
+    // === LẤY CÁC PHẦN TỬ HTML ===
+    const messageEl = document.getElementById('message');
+    const attemptEl = document.getElementById('attempt');
+    const guessInput = document.getElementById('guessInput');
+    const guessBtn = document.getElementById('guessBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const historyList = document.getElementById('historyList');
+
+    // === HÀM CẬP NHẬT LỊCH SỬ HIỂN THỊ ===
+    function updateHistoryDisplay() {
+        if (history.length === 0) {
+            historyList.innerHTML = '<li>✨ Chưa có lượt đoán nào</li>';
+            return;
+        }
+        
+        historyList.innerHTML = '';
+        // Hiển thị lịch sử từ mới nhất đến cũ nhất
+        const reversedHistory = [...history].reverse();
+        reversedHistory.forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = item;
+            historyList.appendChild(li);
+        });
+        // Tự động cuộn xuống cuối (hiển thị mới nhất)
+        const historyDiv = document.querySelector('.history');
+        historyDiv.scrollTop = historyDiv.scrollHeight;
+    }
+
+    // === HÀM HIỂN THỊ THÔNG BÁO (có hiệu ứng) ===
+    function setMessage(text, isSuccess = false) {
+        messageEl.textContent = text;
+        messageEl.style.transition = '0.2s';
+        if (isSuccess) {
+            messageEl.style.transform = 'scale(1.05)';
+            setTimeout(() => {
+                messageEl.style.transform = 'scale(1)';
+            }, 200);
+        } else {
+            messageEl.style.transform = 'scale(1)';
+        }
+    }
+
+    // === HÀM XỬ LÝ KHI ĐOÁN ===
+    function checkGuess() {
+        // Lấy giá trị từ input
+        let guess = parseInt(guessInput.value);
+        
+        // Kiểm tra hợp lệ
+        if (isNaN(guess)) {
+            setMessage('⚠️ Vui lòng nhập một số!', false);
+            return;
+        }
+        
+        if (guess < 1 || guess > 100) {
+            setMessage('⚠️ Số phải từ 1 đến 100!', false);
+            return;
+        }
+        
+        // Tăng số lần đoán
+        attempts++;
+        attemptEl.textContent = `📊 Số lần đoán: ${attempts}`;
+        
+        // Đoán số
+        let feedback = '';
+        let isCorrect = false;
+        
+        if (guess === secretNumber) {
+            feedback = `🎉 CHÍNH XÁC! Bạn đã đoán đúng số ${secretNumber} sau ${attempts} lần! 🎉`;
+            setMessage(feedback, true);
+            isCorrect = true;
+            guessBtn.disabled = true; // Vô hiệu hóa nút đoán khi thắng
+        } else if (guess < secretNumber) {
+            const diff = secretNumber - guess;
+            if (diff <= 10) {
+                feedback = `🔥 RẤT GẦN! Số ${guess} quá THẤP một chút! (Còn thiếu ${diff})`;
+            } else {
+                feedback = `📉 QUÁ THẤP! Số ${guess} nhỏ hơn số bí mật.`;
+            }
+            setMessage(feedback, false);
+        } else {
+            const diff = guess - secretNumber;
+            if (diff <= 10) {
+                feedback = `🔥 RẤT GẦN! Số ${guess} quá CAO một chút! (Còn dư ${diff})`;
+            } else {
+                feedback = `📈 QUÁ CAO! Số ${guess} lớn hơn số bí mật.`;
+            }
+            setMessage(feedback, false);
+        }
+        
+        // Thêm vào lịch sử
+        const historyEntry = `Lần ${attempts}: Đoán ${guess} → ${isCorrect ? '✅ Đúng' : (guess < secretNumber ? '⬇️ Thấp hơn' : '⬆️ Cao hơn')}`;
+        history.push(historyEntry);
+        updateHistoryDisplay();
+        
+        // Xóa ô input và focus
+        guessInput.value = '';
+        guessInput.focus();
+        
+        // Nếu đoán đúng, thêm hiệu ứng vui
+        if (isCorrect) {
+            document.body.style.background = "linear-gradient(135deg, #11998e, #38ef7d)";
+            setTimeout(() => {
+                document.body.style.background = "linear-gradient(135deg, #1e3c72, #2a5298)";
+            }, 1000);
+        }
+    }
+    
+    // === HÀM RESET GAME ===
+    function resetGame() {
+        // Tạo số mới
+        secretNumber = Math.floor(Math.random() * 100) + 1;
+        attempts = 0;
+        history = [];
+        
+        // Reset giao diện
+        attemptEl.textContent = `📊 Số lần đoán: 0`;
+        setMessage('🎮 Game mới! Hãy đoán số từ 1 đến 100', false);
+        guessInput.value = '';
+        guessBtn.disabled = false;
+        updateHistoryDisplay();
+        guessInput.focus();
+        
+        // Hiệu ứng nhẹ khi reset
+        const container = document.querySelector('.game-container');
+        container.style.transform = 'scale(0.98)';
+        setTimeout(() => {
+            container.style.transform = 'scale(1)';
+        }, 150);
+        
+        // Log để debug (bạn có thể mở console để xem số nếu muốn test)
+        console.log(`🎲 Game mới! Số bí mật là: ${secretNumber}`);
+    }
+    
+    // === GÁN SỰ KIỆN CHO NÚT ===
+    guessBtn.addEventListener('click', checkGuess);
+    resetBtn.addEventListener('click', resetGame);
+    
+    // Cho phép nhấn phím Enter để đoán nhanh
+    guessInput.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            if (!guessBtn.disabled) {
+                checkGuess();
+            }
+        }
+    });
+    
+    // Khởi tạo thông báo console (hữu ích để kiểm tra)
+    console.log(`🎮 Game đã sẵn sàng! Số bí mật là: ${secretNumber} (bạn có thể xem ở đây để test)`);
+</script>
+
 </body>
 </html>
