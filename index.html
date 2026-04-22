@@ -2,644 +2,462 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>🧟 ZOMBIE SHOOTER - Bắn zombie sống sót</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lớp 8E - Discord Clone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <style>
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
+            scrollbar-width: thin;
         }
-
-        body {
-            background: linear-gradient(135deg, #0a0f1e, #0c1325);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: 'Courier New', 'VT323', monospace;
-            overflow: hidden;
-        }
-
-        .game-container {
-            position: relative;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-        }
-
-        canvas {
-            display: block;
-            margin: 0 auto;
-            border-radius: 16px;
-            cursor: none;
-            box-shadow: 0 0 0 3px rgba(255,0,0,0.3), 0 0 0 6px rgba(0,0,0,0.5);
-        }
-
-        .ui-panel {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            pointer-events: none;
-            z-index: 10;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .score-box, .health-box, .kill-box {
-            background: rgba(0,0,0,0.75);
-            backdrop-filter: blur(8px);
-            padding: 10px 20px;
-            border-radius: 40px;
-            color: white;
-            font-weight: bold;
-            font-size: 1.3rem;
-            border: 1px solid rgba(255,255,255,0.2);
-            font-family: monospace;
-            letter-spacing: 1px;
-        }
-
-        .score-box span, .health-box span, .kill-box span {
-            color: #ff4757;
-            font-size: 1.6rem;
-            margin-right: 8px;
-        }
-
-        .health-box span {
-            color: #ff6b81;
-        }
-
-        .kill-box span {
-            color: #2ed573;
-        }
-
-        .controls-hint {
-            position: fixed;
-            bottom: 16px;
-            left: 16px;
-            background: rgba(0,0,0,0.55);
-            padding: 6px 14px;
-            border-radius: 20px;
-            color: #aaa;
-            font-size: 0.7rem;
-            font-family: monospace;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        .restart-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #ff4757;
-            border: none;
-            color: white;
-            padding: 12px 28px;
-            border-radius: 40px;
-            font-weight: bold;
-            font-size: 1rem;
-            cursor: pointer;
-            font-family: inherit;
-            z-index: 20;
-            transition: transform 0.1s, background 0.2s;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-
-        .restart-btn:hover {
-            background: #ff6b81;
-            transform: scale(1.02);
-        }
-
-        .game-over {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.92);
-            backdrop-filter: blur(12px);
-            padding: 30px 50px;
-            border-radius: 30px;
-            text-align: center;
-            color: white;
-            z-index: 100;
-            display: none;
-            flex-direction: column;
-            gap: 15px;
-            border: 2px solid #ff4757;
-            min-width: 320px;
-        }
-
-        .game-over h1 {
-            font-size: 2.5rem;
-            color: #ff4757;
-        }
-
-        .game-over p {
-            font-size: 1.2rem;
-        }
-
-        .game-over button {
-            background: #2ed573;
-            border: none;
-            padding: 12px 24px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            border-radius: 40px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        @keyframes blood {
-            0% { opacity: 0.8; transform: scale(1); }
-            100% { opacity: 0; transform: scale(1.5); }
-        }
-
-        @keyframes headshot {
-            0% { opacity: 1; transform: scale(1); }
-            100% { opacity: 0; transform: scale(2); }
-        }
+        .bg-discord-dark { background-color: #36393f; }
+        .bg-discord-sidebar { background-color: #2f3136; }
+        .bg-discord-channel { background-color: #2f3136; }
+        .bg-discord-input { background-color: #40444b; }
+        .bg-discord-hover:hover { background-color: #3a3d44; }
+        .text-discord-muted { color: #8e9297; }
+        .border-discord { border-color: #202225; }
+        .online-dot { background-color: #23a55a; }
+        .message:hover { background-color: #32353b; }
+        .active-channel { background-color: #393c43; }
     </style>
 </head>
-<body>
+<body class="bg-discord-dark text-white">
+    <div id="app"></div>
 
-<div class="ui-panel">
-    <div class="score-box"><span>💀</span> ĐIỂM: <span id="scoreValue">0</span></div>
-    <div class="kill-box"><span>🧟</span> GIẾT: <span id="killValue">0</span></div>
-    <div class="health-box"><span>❤️</span> MÁU: <span id="healthValue">100</span></div>
-</div>
-<div class="controls-hint">🖱️ DI CHUYỂN CHUỘT | CLICK TRÁI ĐỂ BẮN</div>
-<button class="restart-btn" id="restartBtn">🔄 CHƠI LẠI</button>
-
-<div class="game-over" id="gameOverPanel">
-    <h1>💀 GAME OVER 💀</h1>
-    <p>Bạn đã bị zombie ăn thịt!</p>
-    <p>Điểm số: <strong id="finalScore">0</strong></p>
-    <p>Số zombie đã giết: <strong id="finalKills">0</strong></p>
-    <button id="gameOverRestartBtn">CHƠI LẠI</button>
-</div>
-
-<canvas id="gameCanvas" width="1000" height="700"></canvas>
-
-<script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-
-    // === CẤU HÌNH ===
-    const WIDTH = 1000;
-    const HEIGHT = 700;
-    canvas.width = WIDTH;
-    canvas.height = HEIGHT;
-
-    // === NHÂN VẬT ===
-    let player = {
-        x: WIDTH/2,
-        y: HEIGHT/2,
-        radius: 18,
-        health: 100,
-        maxHealth: 100
-    };
-
-    // === ĐẠN ===
-    let bullets = [];
-    const BULLET_RADIUS = 4;
-    const BULLET_SPEED = 9;
-    let shootCooldown = 0;
-    const SHOOT_DELAY = 10; // frame delay
-
-    // === ZOMBIE ===
-    let zombies = [];
-    let zombieSpawnTimer = 0;
-    let zombieSpawnDelay = 45; // frames
-    let kills = 0;
-    let score = 0;
-
-    // === HIỆU ỨNG ===
-    let bloodEffects = [];
-    let headshotEffects = [];
-
-    // === GAME STATE ===
-    let gameRunning = true;
-    let mouseX = player.x, mouseY = player.y;
-
-    // === HÀM SINH ZOMBIE ===
-    function spawnZombie() {
-        let side = Math.floor(Math.random() * 4); // 0: trái, 1: phải, 2: trên, 3: dưới
-        let x, y;
-        const radius = 24;
+    <script>
+        // ==================== KHỞI TẠO DỮ LIỆU ====================
+        let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+        let users = JSON.parse(localStorage.getItem('users') || '[]');
+        let messages = JSON.parse(localStorage.getItem('messages') || '[]');
+        let currentChannel = 'general';
         
-        if (side === 0) { // trái
-            x = -radius;
-            y = Math.random() * HEIGHT;
-        } else if (side === 1) { // phải
-            x = WIDTH + radius;
-            y = Math.random() * HEIGHT;
-        } else if (side === 2) { // trên
-            x = Math.random() * WIDTH;
-            y = -radius;
-        } else { // dưới
-            x = Math.random() * WIDTH;
-            y = HEIGHT + radius;
+        // Tạo tài khoản mặc định nếu chưa có
+        if (users.length === 0) {
+            users = [
+                { id: '1', username: 'cogiaochunhiem', password: '123456', role: 'teacher', avatar: '👩‍🏫', createdAt: new Date().toISOString() },
+                { id: '2', username: 'hocsinh1', password: '123456', role: 'student', avatar: '👨‍🎓', createdAt: new Date().toISOString() }
+            ];
+            localStorage.setItem('users', JSON.stringify(users));
         }
         
-        // Cận biên an toàn
-        x = Math.max(-radius, Math.min(WIDTH + radius, x));
-        y = Math.max(-radius, Math.min(HEIGHT + radius, y));
+        // Tin nhắn mặc định
+        if (messages.length === 0) {
+            messages = [
+                { id: '1', username: 'cogiaochunhiem', content: 'Chào mừng các em đến với lớp 8E! 📚', channel: 'general', timestamp: new Date(Date.now() - 3600000).toISOString(), avatar: '👩‍🏫' },
+                { id: '2', username: 'cogiaochunhiem', content: 'Đây là nơi chúng ta sẽ trao đổi bài tập và thông tin lớp nhé!', channel: 'general', timestamp: new Date(Date.now() - 3500000).toISOString(), avatar: '👩‍🏫' },
+                { id: '3', username: 'hocsinh1', content: 'Dạ vâng ạ! Em chào cô và các bạn 👋', channel: 'general', timestamp: new Date(Date.now() - 3400000).toISOString(), avatar: '👨‍🎓' }
+            ];
+            localStorage.setItem('messages', JSON.stringify(messages));
+        }
         
-        // Tốc độ zombie tăng dần theo điểm
-        const baseSpeed = 1.6;
-        const speedBonus = Math.min(2.2, Math.floor(score / 800) * 0.2);
-        const speed = baseSpeed + speedBonus;
-        
-        zombies.push({
-            x: x, y: y, radius: radius,
-            speed: speed,
-            health: 2,
-            color: `hsl(${Math.random() * 20 + 80}, 70%, 35%)`,
-            type: 'normal'
-        });
-    }
-
-    // === BẮN ĐẠN ===
-    function shoot(aimX, aimY) {
-        if (!gameRunning) return;
-        const dx = aimX - player.x;
-        const dy = aimY - player.y;
-        const len = Math.hypot(dx, dy);
-        if (len < 0.01) return;
-        const vx = (dx / len) * BULLET_SPEED;
-        const vy = (dy / len) * BULLET_SPEED;
-        
-        bullets.push({
-            x: player.x,
-            y: player.y,
-            vx: vx,
-            vy: vy,
-            radius: BULLET_RADIUS,
-            life: true
-        });
-    }
-
-    // === CẬP NHẬT GAME ===
-    function update() {
-        if (!gameRunning) return;
-        
-        // 1. Di chuyển người chơi theo chuột (giới hạn trong canvas)
-        player.x = Math.min(Math.max(mouseX, player.radius), WIDTH - player.radius);
-        player.y = Math.min(Math.max(mouseY, player.radius), HEIGHT - player.radius);
-        
-        // 2. Cooldown bắn
-        if (shootCooldown > 0) shootCooldown--;
-        
-        // 3. Cập nhật đạn
-        for (let i = bullets.length-1; i >= 0; i--) {
-            const b = bullets[i];
-            b.x += b.vx;
-            b.y += b.vy;
-            
-            // Xóa nếu ra ngoài màn hình
-            if (b.x < -50 || b.x > WIDTH+50 || b.y < -50 || b.y > HEIGHT+50) {
-                bullets.splice(i,1);
-                continue;
+        // ==================== HÀM TIỆN ÍCH ====================
+        function saveData() {
+            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('messages', JSON.stringify(messages));
+            if (currentUser) {
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            } else {
+                localStorage.removeItem('currentUser');
             }
+        }
+        
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            if (diff < 60000) return 'Vừa xong';
+            if (diff < 3600000) return `${Math.floor(diff / 60000)} phút trước`;
+            if (diff < 86400000) return `${Math.floor(diff / 3600000)} giờ trước`;
+            return date.toLocaleDateString('vi-VN');
+        }
+        
+        // ==================== COMPONENTS ====================
+        
+        // Màn hình đăng nhập
+        function LoginScreen() {
+            return `
+                <div class="min-h-screen bg-gradient-to-br from-[#5865F2] to-[#4752C4] flex items-center justify-center p-4">
+                    <div class="bg-[#36393f] rounded-lg w-full max-w-md p-8 shadow-2xl">
+                        <div class="text-center mb-8">
+                            <div class="text-5xl mb-3">📚</div>
+                            <h1 class="text-3xl font-bold text-white">Lớp 8E</h1>
+                            <p class="text-discord-muted mt-2">Đăng nhập để vào lớp học</p>
+                        </div>
+                        
+                        <form id="loginForm">
+                            <div class="mb-4">
+                                <label class="block text-xs font-semibold uppercase text-discord-muted mb-1">Tên đăng nhập</label>
+                                <input type="text" id="loginUsername" class="w-full bg-[#202225] text-white rounded p-3 outline-none focus:ring-2 focus:ring-[#5865F2]" placeholder="cogiaochunhiem hoặc hocsinh1">
+                            </div>
+                            <div class="mb-6">
+                                <label class="block text-xs font-semibold uppercase text-discord-muted mb-1">Mật khẩu</label>
+                                <input type="password" id="loginPassword" class="w-full bg-[#202225] text-white rounded p-3 outline-none focus:ring-2 focus:ring-[#5865F2]" placeholder="••••••">
+                            </div>
+                            <button type="submit" class="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold py-3 rounded transition">Đăng nhập</button>
+                        </form>
+                        
+                        <div class="text-center mt-6">
+                            <span class="text-discord-muted">Chưa có tài khoản? </span>
+                            <button id="showRegisterBtn" class="text-[#5865F2] hover:underline">Đăng ký</button>
+                        </div>
+                        
+                        <div class="mt-4 p-3 bg-[#202225] rounded text-xs text-discord-muted">
+                            <p class="font-semibold mb-1">📝 Tài khoản mặc định:</p>
+                            <p>👩‍🏫 Giáo viên: cogiaochunhiem / 123456</p>
+                            <p>👨‍🎓 Học sinh: hocsinh1 / 123456</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Màn hình đăng ký
+        function RegisterScreen() {
+            return `
+                <div class="min-h-screen bg-gradient-to-br from-[#5865F2] to-[#4752C4] flex items-center justify-center p-4">
+                    <div class="bg-[#36393f] rounded-lg w-full max-w-md p-8 shadow-2xl">
+                        <div class="text-center mb-8">
+                            <div class="text-5xl mb-3">📝</div>
+                            <h1 class="text-3xl font-bold text-white">Đăng ký</h1>
+                            <p class="text-discord-muted mt-2">Tham gia Lớp 8E</p>
+                        </div>
+                        
+                        <form id="registerForm">
+                            <div class="mb-4">
+                                <label class="block text-xs font-semibold uppercase text-discord-muted mb-1">Tên đăng nhập</label>
+                                <input type="text" id="regUsername" class="w-full bg-[#202225] text-white rounded p-3 outline-none focus:ring-2 focus:ring-[#5865F2]" placeholder="tencuaban" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-xs font-semibold uppercase text-discord-muted mb-1">Mật khẩu</label>
+                                <input type="password" id="regPassword" class="w-full bg-[#202225] text-white rounded p-3 outline-none focus:ring-2 focus:ring-[#5865F2]" placeholder="••••••" required>
+                            </div>
+                            <div class="mb-6">
+                                <label class="block text-xs font-semibold uppercase text-discord-muted mb-1">Xác nhận mật khẩu</label>
+                                <input type="password" id="regConfirmPassword" class="w-full bg-[#202225] text-white rounded p-3 outline-none focus:ring-2 focus:ring-[#5865F2]" placeholder="••••••" required>
+                            </div>
+                            <button type="submit" class="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold py-3 rounded transition">Đăng ký</button>
+                        </form>
+                        
+                        <div class="text-center mt-6">
+                            <span class="text-discord-muted">Đã có tài khoản? </span>
+                            <button id="showLoginBtn" class="text-[#5865F2] hover:underline">Đăng nhập</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Giao diện chat chính (Discord-like)
+        function ChatScreen() {
+            const channelMessages = messages.filter(m => m.channel === currentChannel);
+            const isTeacher = currentUser?.role === 'teacher';
             
-            let hit = false;
-            // Kiểm tra va chạm với zombie
-            for (let j = zombies.length-1; j >= 0; j--) {
-                const z = zombies[j];
-                const dist = Math.hypot(b.x - z.x, b.y - z.y);
-                if (dist < z.radius + b.radius) {
-                    hit = true;
-                    z.health -= 1;
+            return `
+                <div class="flex h-screen">
+                    <!-- Sidebar trái -->
+                    <div class="w-64 bg-discord-sidebar flex flex-col">
+                        <div class="p-3 shadow-md border-b border-[#202225]">
+                            <h1 class="text-lg font-bold">📚 Lớp 8E</h1>
+                            <div class="flex items-center mt-2 text-sm">
+                                <div class="w-2 h-2 online-dot rounded-full mr-2"></div>
+                                <span class="text-gray-300">${currentUser?.username || ''}</span>
+                                ${isTeacher ? '<span class="ml-2 text-xs bg-[#5865F2] px-1 rounded">GV</span>' : ''}
+                            </div>
+                        </div>
+                        
+                        <div class="flex-1 overflow-y-auto p-2">
+                            <div class="text-xs uppercase text-discord-muted font-semibold mb-2 px-2">Kênh văn bản</div>
+                            
+                            <div class="channel-item ${currentChannel === 'general' ? 'active-channel' : ''} p-2 rounded cursor-pointer flex items-center hover:bg-[#3a3d44] transition" data-channel="general">
+                                <span class="mr-2">#</span>
+                                <span class="flex-1">chung</span>
+                                <span class="text-xs text-discord-muted">${messages.filter(m => m.channel === 'general').length}</span>
+                            </div>
+                            
+                            <div class="channel-item ${currentChannel === 'homework' ? 'active-channel' : ''} p-2 rounded cursor-pointer flex items-center hover:bg-[#3a3d44] transition" data-channel="homework">
+                                <span class="mr-2">📝</span>
+                                <span class="flex-1">bài tập</span>
+                                <span class="text-xs text-discord-muted">${messages.filter(m => m.channel === 'homework').length}</span>
+                            </div>
+                            
+                            <div class="channel-item ${currentChannel === 'announcements' ? 'active-channel' : ''} p-2 rounded cursor-pointer flex items-center hover:bg-[#3a3d44] transition" data-channel="announcements">
+                                <span class="mr-2">📢</span>
+                                <span class="flex-1">thông báo</span>
+                                <span class="text-xs text-discord-muted">${messages.filter(m => m.channel === 'announcements').length}</span>
+                            </div>
+                            
+                            <div class="channel-item ${currentChannel === 'random' ? 'active-channel' : ''} p-2 rounded cursor-pointer flex items-center hover:bg-[#3a3d44] transition" data-channel="random">
+                                <span class="mr-2">🎮</span>
+                                <span class="flex-1">random</span>
+                                <span class="text-xs text-discord-muted">${messages.filter(m => m.channel === 'random').length}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="p-3 border-t border-[#202225]">
+                            <button id="logoutBtn" class="w-full text-left text-discord-muted hover:text-white text-sm py-1 flex items-center">
+                                <span class="mr-2">🚪</span> Đăng xuất
+                            </button>
+                        </div>
+                    </div>
                     
-                    if (z.health <= 0) {
-                        // Chết
-                        const isHeadshot = Math.random() < 0.15;
-                        if (isHeadshot) {
-                            headshotEffects.push({ x: z.x, y: z.y, life: 8 });
-                            score += 15;
-                        } else {
-                            bloodEffects.push({ x: z.x, y: z.y, life: 8 });
-                            score += 10;
-                        }
-                        kills++;
-                        zombies.splice(j,1);
-                        updateUI();
-                    } else {
-                        // Trúng nhưng chưa chết: hiệu ứng máu nhẹ
-                        bloodEffects.push({ x: z.x, y: z.y, life: 4 });
-                    }
-                    break;
-                }
-            }
-            if (hit) {
-                bullets.splice(i,1);
+                    <!-- Khu vực chat chính -->
+                    <div class="flex-1 flex flex-col bg-discord-dark">
+                        <!-- Header channel -->
+                        <div class="h-12 shadow-sm border-b border-[#202225] flex items-center px-4">
+                            <span class="text-xl mr-2">${currentChannel === 'general' ? '#' : currentChannel === 'homework' ? '📝' : currentChannel === 'announcements' ? '📢' : '🎮'}</span>
+                            <span class="font-semibold">${getChannelName(currentChannel)}</span>
+                            <span class="text-discord-muted text-sm ml-2">· ${channelMessages.length} tin nhắn</span>
+                        </div>
+                        
+                        <!-- Danh sách tin nhắn -->
+                        <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-2">
+                            ${channelMessages.map(msg => `
+                                <div class="message flex items-start hover:bg-[#32353b] p-2 rounded transition group">
+                                    <div class="text-3xl mr-3">${getUserAvatar(msg.username)}</div>
+                                    <div class="flex-1">
+                                        <div class="flex items-baseline gap-2">
+                                            <span class="font-semibold hover:underline cursor-pointer">${msg.username}</span>
+                                            <span class="text-xs text-discord-muted">${formatTime(msg.timestamp)}</span>
+                                            ${msg.username === currentUser?.username ? `<button class="delete-msg opacity-0 group-hover:opacity-100 text-red-400 text-xs ml-2" data-msg-id="${msg.id}">🗑️</button>` : ''}
+                                        </div>
+                                        <div class="text-gray-200 break-words">${escapeHtml(msg.content)}</div>
+                                    </div>
+                                </div>
+                            `).reverse().join('')}
+                            ${channelMessages.length === 0 ? '<div class="text-center text-discord-muted py-10">✨ Chưa có tin nhắn nào. Hãy gửi tin nhắn đầu tiên!</div>' : ''}
+                        </div>
+                        
+                        <!-- Ô nhập tin nhắn -->
+                        <div class="p-4">
+                            <div class="bg-discord-input rounded-lg flex items-center">
+                                <input type="text" id="messageInput" class="flex-1 bg-transparent text-white p-3 outline-none" placeholder="Nhập tin nhắn... ${isTeacher ? '(Giáo viên có thể @mọi người)' : ''}" autocomplete="off">
+                                <button id="sendBtn" class="bg-[#5865F2] hover:bg-[#4752C4] text-white px-4 py-2 m-1 rounded transition">
+                                    Gửi
+                                </button>
+                            </div>
+                            <div class="text-xs text-discord-muted mt-2">
+                                ${isTeacher ? '🔔 Bạn là giáo viên - tin nhắn của bạn sẽ được đánh dấu' : '💬 Hãy tương tác lịch sự nhé!'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function getChannelName(channel) {
+            const names = {
+                general: 'chung',
+                homework: 'bài tập',
+                announcements: 'thông báo',
+                random: 'random'
+            };
+            return names[channel] || channel;
+        }
+        
+        function getUserAvatar(username) {
+            const user = users.find(u => u.username === username);
+            if (user && user.avatar) return user.avatar;
+            if (username === 'cogiaochunhiem') return '👩‍🏫';
+            return '👨‍🎓';
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // ==================== XỬ LÝ SỰ KIỆN ====================
+        
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const content = input.value.trim();
+            if (!content) return;
+            
+            const newMessage = {
+                id: Date.now().toString(),
+                username: currentUser.username,
+                content: content,
+                channel: currentChannel,
+                timestamp: new Date().toISOString(),
+                avatar: getUserAvatar(currentUser.username)
+            };
+            
+            messages.push(newMessage);
+            saveData();
+            input.value = '';
+            renderApp();
+            
+            // Auto scroll
+            setTimeout(() => {
+                const container = document.getElementById('messagesContainer');
+                if (container) container.scrollTop = container.scrollHeight;
+            }, 100);
+        }
+        
+        function deleteMessage(msgId) {
+            messages = messages.filter(m => m.id !== msgId);
+            saveData();
+            renderApp();
+        }
+        
+        function logout() {
+            currentUser = null;
+            saveData();
+            renderApp();
+        }
+        
+        function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            const user = users.find(u => u.username === username && u.password === password);
+            if (user) {
+                currentUser = { id: user.id, username: user.username, role: user.role, avatar: user.avatar };
+                saveData();
+                renderApp();
+            } else {
+                alert('Sai tên đăng nhập hoặc mật khẩu!');
             }
         }
         
-        // 4. Cập nhật zombie
-        for (let i = 0; i < zombies.length; i++) {
-            const z = zombies[i];
-            const dx = player.x - z.x;
-            const dy = player.y - z.y;
-            const len = Math.hypot(dx, dy);
-            if (len > 0.01) {
-                const move = Math.min(z.speed, len - z.radius - player.radius);
-                z.x += (dx / len) * move;
-                z.y += (dy / len) * move;
+        function handleRegister(e) {
+            e.preventDefault();
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regConfirmPassword').value;
+            
+            if (!username || !password) {
+                alert('Vui lòng nhập đầy đủ thông tin!');
+                return;
             }
             
-            // Va chạm với người chơi
-            const distToPlayer = Math.hypot(z.x - player.x, z.y - player.y);
-            if (distToPlayer < z.radius + player.radius) {
-                player.health -= 12;
-                updateUI();
-                // Đẩy zombie lùi
-                const angle = Math.atan2(z.y - player.y, z.x - player.x);
-                z.x += Math.cos(angle) * 25;
-                z.y += Math.sin(angle) * 25;
-                bloodEffects.push({ x: player.x, y: player.y, life: 6 });
+            if (password !== confirm) {
+                alert('Mật khẩu xác nhận không khớp!');
+                return;
+            }
+            
+            if (users.find(u => u.username === username)) {
+                alert('Tên đăng nhập đã tồn tại!');
+                return;
+            }
+            
+            const newUser = {
+                id: Date.now().toString(),
+                username: username,
+                password: password,
+                role: 'student',
+                avatar: '👨‍🎓',
+                createdAt: new Date().toISOString()
+            };
+            
+            users.push(newUser);
+            saveData();
+            
+            alert('Đăng ký thành công! Vui lòng đăng nhập.');
+            renderApp();
+        }
+        
+        // ==================== RENDER CHÍNH ====================
+        
+        function renderApp() {
+            const app = document.getElementById('app');
+            let html = '';
+            
+            if (!currentUser) {
+                // Kiểm tra xem đang ở màn hình đăng ký hay đăng nhập
+                const showRegister = window._showRegister || false;
+                if (showRegister) {
+                    html = RegisterScreen();
+                } else {
+                    html = LoginScreen();
+                }
+            } else {
+                html = ChatScreen();
+            }
+            
+            app.innerHTML = html;
+            
+            // Gắn sự kiện sau khi render
+            if (!currentUser) {
+                const loginForm = document.getElementById('loginForm');
+                if (loginForm) {
+                    loginForm.addEventListener('submit', handleLogin);
+                }
                 
-                if (player.health <= 0) {
-                    gameRunning = false;
-                    document.getElementById('finalScore').innerText = score;
-                    document.getElementById('finalKills').innerText = kills;
-                    document.getElementById('gameOverPanel').style.display = 'flex';
+                const registerForm = document.getElementById('registerForm');
+                if (registerForm) {
+                    registerForm.addEventListener('submit', handleRegister);
+                }
+                
+                const showRegisterBtn = document.getElementById('showRegisterBtn');
+                if (showRegisterBtn) {
+                    showRegisterBtn.addEventListener('click', () => {
+                        window._showRegister = true;
+                        renderApp();
+                    });
+                }
+                
+                const showLoginBtn = document.getElementById('showLoginBtn');
+                if (showLoginBtn) {
+                    showLoginBtn.addEventListener('click', () => {
+                        window._showRegister = false;
+                        renderApp();
+                    });
+                }
+            } else {
+                // Gắn sự kiện chat
+                const sendBtn = document.getElementById('sendBtn');
+                const messageInput = document.getElementById('messageInput');
+                
+                if (sendBtn) {
+                    sendBtn.addEventListener('click', sendMessage);
+                }
+                if (messageInput) {
+                    messageInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') sendMessage();
+                    });
+                }
+                
+                const logoutBtn = document.getElementById('logoutBtn');
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', logout);
+                }
+                
+                // Gắn sự kiện chuyển kênh
+                document.querySelectorAll('.channel-item').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        const channel = el.dataset.channel;
+                        if (channel) {
+                            currentChannel = channel;
+                            renderApp();
+                        }
+                    });
+                });
+                
+                // Gắn sự kiện xóa tin nhắn
+                document.querySelectorAll('.delete-msg').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const msgId = btn.dataset.msgId;
+                        if (confirm('Bạn có chắc muốn xóa tin nhắn này?')) {
+                            deleteMessage(msgId);
+                        }
+                    });
+                });
+                
+                // Auto scroll xuống cuối
+                const container = document.getElementById('messagesContainer');
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
                 }
             }
         }
         
-        // 5. Sinh zombie theo thời gian
-        if (zombieSpawnTimer <= 0) {
-            let dynamicDelay = Math.max(18, zombieSpawnDelay - Math.floor(score / 600));
-            if (zombies.length < 12) {
-                spawnZombie();
-                if (score > 800 && zombies.length < 18) spawnZombie(); // double spawn khi điểm cao
-            }
-            zombieSpawnTimer = dynamicDelay;
-        } else {
-            zombieSpawnTimer--;
-        }
-        
-        // 6. Cập nhật hiệu ứng
-        for (let i=bloodEffects.length-1; i>=0; i--) {
-            bloodEffects[i].life--;
-            if (bloodEffects[i].life <= 0) bloodEffects.splice(i,1);
-        }
-        for (let i=headshotEffects.length-1; i>=0; i--) {
-            headshotEffects[i].life--;
-            if (headshotEffects[i].life <= 0) headshotEffects.splice(i,1);
-        }
-        
-        // Giới hạn số lượng đạn để tránh lag
-        if (bullets.length > 150) bullets = bullets.slice(-120);
-    }
-    
-    function updateUI() {
-        document.getElementById('scoreValue').innerText = Math.floor(score);
-        document.getElementById('killValue').innerText = kills;
-        document.getElementById('healthValue').innerText = Math.max(0, player.health);
-    }
-    
-    // === VẼ MỌI THỨ ===
-    function draw() {
-        ctx.clearRect(0, 0, WIDTH, HEIGHT);
-        
-        // Nền: hiệu ứng dark ground
-        const grad = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-        grad.addColorStop(0, '#1a2a32');
-        grad.addColorStop(1, '#0e1a1f');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, WIDTH, HEIGHT);
-        
-        // Vẽ lưới mặt đất (chiến hào)
-        ctx.strokeStyle = 'rgba(80,120,80,0.25)';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < WIDTH; i += 60) {
-            ctx.beginPath();
-            ctx.moveTo(i, 0);
-            ctx.lineTo(i, HEIGHT);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(0, i % HEIGHT);
-            ctx.lineTo(WIDTH, i % HEIGHT);
-            ctx.stroke();
-        }
-        
-        // Zombie
-        for (const z of zombies) {
-            // body
-            ctx.shadowBlur = 0;
-            ctx.beginPath();
-            ctx.arc(z.x, z.y, z.radius-2, 0, Math.PI*2);
-            ctx.fillStyle = z.color || '#2f4f2f';
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(z.x-6, z.y-5, 5, 0, Math.PI*2);
-            ctx.fillStyle = '#111';
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(z.x+6, z.y-5, 5, 0, Math.PI*2);
-            ctx.fill();
-            ctx.fillStyle = '#c0392b';
-            ctx.beginPath();
-            ctx.arc(z.x-6, z.y-6, 2, 0, Math.PI*2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(z.x+6, z.y-6, 2, 0, Math.PI*2);
-            ctx.fill();
-            
-            // miệng
-            ctx.beginPath();
-            ctx.arc(z.x, z.y+5, 9, 0.05, Math.PI - 0.05);
-            ctx.strokeStyle = '#5a2e1a';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            // răng
-            for (let t = -5; t <= 5; t+=4) {
-                ctx.fillStyle = '#f1c40f';
-                ctx.fillRect(z.x+t-2, z.y+4, 3, 6);
-            }
-            // quần áo rách
-            ctx.fillStyle = '#1a3a2a';
-            ctx.fillRect(z.x-12, z.y+8, 24, 8);
-            
-            // thanh máu zombie
-            const hpPercent = z.health / 2;
-            ctx.fillStyle = '#aa2e1e';
-            ctx.fillRect(z.x-18, z.y-18, 36, 6);
-            ctx.fillStyle = '#27ae60';
-            ctx.fillRect(z.x-18, z.y-18, 36 * hpPercent, 5);
-        }
-        
-        // Đạn
-        for (const b of bullets) {
-            ctx.beginPath();
-            ctx.arc(b.x, b.y, 5, 0, Math.PI*2);
-            ctx.fillStyle = '#ffd966';
-            ctx.shadowBlur = 8;
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(b.x, b.y, 2, 0, Math.PI*2);
-            ctx.fillStyle = 'orange';
-            ctx.fill();
-        }
-        ctx.shadowBlur = 0;
-        
-        // Hiệu ứng máu
-        for (const b of bloodEffects) {
-            ctx.beginPath();
-            ctx.arc(b.x, b.y, 10, 0, Math.PI*2);
-            ctx.fillStyle = `rgba(180, 30, 20, ${b.life / 8})`;
-            ctx.fill();
-        }
-        for (const h of headshotEffects) {
-            ctx.beginPath();
-            ctx.arc(h.x, h.y, 18, 0, Math.PI*2);
-            ctx.fillStyle = `rgba(255, 100, 0, ${h.life / 8})`;
-            ctx.fill();
-            ctx.fillStyle = `rgba(255, 255, 150, ${h.life / 6})`;
-            ctx.font = "bold 20px monospace";
-            ctx.fillText("💥", h.x-12, h.y-10);
-        }
-        
-        // Người chơi (tay súng)
-        ctx.shadowBlur = 6;
-        ctx.beginPath();
-        ctx.arc(player.x, player.y, player.radius, 0, Math.PI*2);
-        ctx.fillStyle = '#4a6a8f';
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(player.x, player.y, player.radius-4, 0, Math.PI*2);
-        ctx.fillStyle = '#3a5a7f';
-        ctx.fill();
-        // mắt
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(player.x-6, player.y-5, 4, 0, Math.PI*2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(player.x+6, player.y-5, 4, 0, Math.PI*2);
-        ctx.fill();
-        ctx.fillStyle = '#0f1a2f';
-        ctx.beginPath();
-        ctx.arc(player.x-6, player.y-6, 2, 0, Math.PI*2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(player.x+6, player.y-6, 2, 0, Math.PI*2);
-        ctx.fill();
-        // mũ
-        ctx.fillStyle = '#2c3e50';
-        ctx.fillRect(player.x-16, player.y-18, 32, 12);
-        // súng
-        const angleToMouse = Math.atan2(mouseY - player.y, mouseX - player.x);
-        const gunX = player.x + Math.cos(angleToMouse) * 18;
-        const gunY = player.y + Math.sin(angleToMouse) * 18;
-        ctx.beginPath();
-        ctx.moveTo(player.x, player.y);
-        ctx.lineTo(gunX, gunY);
-        ctx.lineWidth = 8;
-        ctx.strokeStyle = '#b87333';
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(gunX, gunY, 6, 0, Math.PI*2);
-        ctx.fillStyle = '#8b5a2b';
-        ctx.fill();
-        
-        // Thanh máu người chơi
-        const healthPercent = player.health / player.maxHealth;
-        ctx.fillStyle = '#330000';
-        ctx.fillRect(player.x-28, player.y-28, 56, 10);
-        ctx.fillStyle = '#e74c3c';
-        ctx.fillRect(player.x-28, player.y-28, 56 * healthPercent, 9);
-        
-        // Con trỏ custom (điểm ruồi)
-        ctx.beginPath();
-        ctx.arc(mouseX, mouseY, 7, 0, Math.PI*2);
-        ctx.strokeStyle = '#ff3333';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(mouseX-12, mouseY);
-        ctx.lineTo(mouseX-4, mouseY);
-        ctx.moveTo(mouseX+4, mouseY);
-        ctx.lineTo(mouseX+12, mouseY);
-        ctx.moveTo(mouseX, mouseY-12);
-        ctx.lineTo(mouseX, mouseY-4);
-        ctx.moveTo(mouseX, mouseY+4);
-        ctx.lineTo(mouseX, mouseY+12);
-        ctx.stroke();
-        
-        ctx.shadowBlur = 0;
-    }
-    
-    // === GAME LOOP ===
-    let lastTimestamp = 0;
-    function gameLoop() {
-        update();
-        draw();
-        requestAnimationFrame(gameLoop);
-    }
-    
-    // === RESET GAME ===
-    function resetGame() {
-        gameRunning = true;
-        player.health = player.maxHealth;
-        player.x = WIDTH/2;
-        player.y = HEIGHT/2;
-        bullets = [];
-        zombies = [];
-        bloodEffects = [];
-        headshotEffects = [];
-        kills = 0;
-        score = 0;
-        shootCooldown = 0;
-        zombieSpawnTimer = 12;
-        updateUI();
-        document.getElementById('gameOverPanel').style.display = 'none';
-        // sinh 2 zombie đầu
-        for(let i=0;i<3;i++) spawnZombie();
-    }
-    
-    // === SỰ KIỆN CHUỘT ===
-    function onMouseMove(e) {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        let canvasX = (e.clientX - rect.left) * scaleX;
-        let canvasY = (e.clientY - rect.top) * scaleY;
-        canvasX = Math.min(Math.max(canvasX, 0), WIDTH);
-        canvasY = Math.min(Math.max(canvasY, 0), HEIGHT);
-        mouseX = canvasX;
-        mouseY = canvasY;
-    }
-    
-    function onMouseDown(e) {
-        e.preventDefault();
-        if (!gameRunning) return;
-        if (shootCooldown <= 0) {
-            shoot(mouseX, mouseY);
-            shootCooldown = SHOOT_DELAY;
-            // Rung nhẹ khi bắn
-            if (navigator.vibrate) navigator.vibrate(12);
-        }
-    }
-    
-    // === KHỞI TẠO ===
-    function init() {
-        resetGame();
-        canvas.addEventListener('mousemove', onMouseMove);
-        canvas.addEventListener('mousedown', onMouseDown);
-        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-        document.getElementById('restartBtn').addEventListener('click', () => resetGame());
-        document.getElementById('gameOverRestartBtn').addEventListener('click', () => resetGame());
-        gameLoop();
-    }
-    
-    init();
-</script>
+        // Khởi chạy ứng dụng
+        renderApp();
+    </script>
 </body>
 </html>
