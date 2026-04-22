@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>👻 THE HAUNTED MANSION - Tham quan nhà ma</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Courier New', 'Creepster', monospace;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .ui-panel {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+            z-index: 10;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .inventory-box, .items-box, .hint-box {
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            border-radius: 12px;
+            color: #d4c4a8;
+            font-family: monospace;
+            border: 1px solid rgba(139,69,19,0.5);
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        .inventory-box span, .items-box span {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        .hint-box {
+            font-size: 0.8rem;
+            color: #aaa;
+            max-width: 300px;
+        }
+
+        .controls-hint {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.6);
+            padding: 6px 14px;
+            border-radius: 20px;
+            color: #8b7355;
+            font-size: 0.7rem;
+            font-family: monospace;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .restart-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #5a2e1a;
+            border: 1px solid #8b4513;
+            color: #ffd700;
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-family: monospace;
+            z-index: 20;
+            transition: 0.2s;
+        }
+
+        .restart-btn:hover {
+            background: #8b4513;
+            transform: scale(1.02);
+        }
+
+        .game-over {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(15px);
+            padding: 40px 60px;
+            border-radius: 20px;
+            text-align: center;
+            color: white;
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+            border: 2px solid #8b0000;
+            box-shadow: 0 0 50px rgba(139,0,0,0.5);
+        }
+
+        .game-over h1 {
+            font-size: 3rem;
+            color: #8b0000;
+            font-family: 'Creepster', cursive;
+            letter-spacing: 3px;
+        }
+
+        .game-over button {
+            background: #5a2e1a;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 40px;
+            cursor: pointer;
+            color: #ffd700;
+        }
+
+        .message-toast {
+            position: fixed;
+            bottom: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            padding: 12px 24px;
+            border-radius: 40px;
+            color: #ffd700;
+            font-family: monospace;
+            font-size: 1rem;
+            z-index: 15;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            white-space: nowrap;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .fog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+            background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.3) 100%);
+        }
+    </style>
+</head>
+<body>
+
+<div class="ui-panel">
+    <div class="inventory-box">🔮 VẬT PHẨM: <span id="itemsCount">0</span>/5</div>
+    <div class="hint-box" id="hintText">👻 Tìm 5 vật phẩm để phá lời nguyền...</div>
+</div>
+<div class="controls-hint">🎮 WASD: DI CHUYỂN | 🖱️ CHUỘT: XOAY GÓC NHÌN</div>
+<button class="restart-btn" id="restartBtn">🔄 THOÁT KHỎI NHÀ MA</button>
+
+<div class="game-over" id="gameOverPanel">
+    <h1>🏆 THOÁT KHỎI! 🏆</h1>
+    <p>Bạn đã phá được lời nguyền của căn nhà ma!</p>
+    <p id="escapeMessage">Linh hồn được siêu thoát...</p>
+    <button id="gameOverRestartBtn">CHƠI LẠI</button>
+</div>
+
+<div id="messageToast" class="message-toast"></div>
+<div class="fog-overlay"></div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    // === CẤU HÌNH BẢN ĐỒ (grid 20x20, mỗi ô 50px) ===
+    const TILE_SIZE = 50;
+    const MAP_WIDTH = 20;
+    const MAP_HEIGHT = 20;
+
+    // Bản đồ: 0 = tường, 1 = đường đi, 2 = cửa, 3 = vật phẩm
+    const map = [
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,0],
+        [0,1,0,0,0,1,0,1,0,0,0,1,0,1,0,0,0,1,1,0],
+        [0,1,0,3,0,1,0,1,0,3,0,1,0,1,0,3,0,1,1,0],
+        [0,1,0,0,0,1,0,1,0,0,0,1,0,1,0,0,0,1,1,0],
+        [0,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,0],
+        [0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,1,0],
+        [0,1,0,0,0,1,0,3,0,1,0,3,0,1,0,0,0,1,1,0],
+        [0,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,0],
+        [0,1,0,0,0,1,0,1,0,0,0,1,0,1,0,0,0,1,1,0],
+        [0,1,0,3,0,1,0,1,0,3,0,1,0,1,0,3,0,1,1,0],
+        [0,1,0,0,0,1,0,1,0,0,0,1,0,1,0,0,0,1,1,0],
+        [0,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,0],
+        [0,1,0,0,0,1,0,1,0,0,0,1,0,1,0,0,0,1,1,0],
+        [0,1,0,0,0,1,0,1,0,3,0,1,0,1,0,0,0,1,1,0],
+        [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+        [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    ];
+
+    // Vật phẩm cần tìm
+    const items = [
+        { name: "📜 Bùa chú cổ", collected: false, pos: { x: 3, y: 3 }, icon: "📜" },
+        { name: "🕯️ Nến đen", collected: false, pos: { x: 7, y: 1 }, icon: "🕯️" },
+        { name: "🔮 Ngọc bí ẩn", collected: false, pos: { x: 12, y: 12 }, icon: "🔮" },
+        { name: "📖 Nhật ký ma", collected: false, pos: { x: 16, y: 3 }, icon: "📖" },
+        { name: "⚰️ Huyết thạch", collected: false, pos: { x: 5, y: 16 }, icon: "⚰️" }
+    ];
+
+    let collectedCount = 0;
+    let gameRunning = true;
+    let escapeTriggered = false;
+
+    // === NGƯỜI CHƠI ===
+    let player = {
+        x: 10 * TILE_SIZE + TILE_SIZE/2,
+        y: 10 * TILE_SIZE + TILE_SIZE/2,
+        radius: 18,
+        angle: 0,
+        speed: 3
+    };
+
+    // === HIỆU ỨNG MA ===
+    let ghosts = [];
+    let ghostSpawnTimer = 0;
+    let ambientSoundPlaying = false;
+
+    // Hiệu ứng ánh sáng
+    let lights = [];
+    let flickerTimer = 0;
+
+    // === TẠO HIỆU ỨNG MA BAY ===
+    function spawnGhost() {
+        if (!gameRunning) return;
+        // Tìm vị trí ngẫu nhiên trên bản đồ
+        let validPositions = [];
+        for (let i = 0; i < MAP_WIDTH; i++) {
+            for (let j = 0; j < MAP_HEIGHT; j++) {
+                if (map[j][i] !== 0) {
+                    validPositions.push({ x: i * TILE_SIZE + TILE_SIZE/2, y: j * TILE_SIZE + TILE_SIZE/2 });
+                }
+            }
+        }
+        if (validPositions.length > 0) {
+            const pos = validPositions[Math.floor(Math.random() * validPositions.length)];
+            ghosts.push({
+                x: pos.x,
+                y: pos.y,
+                radius: 22,
+                alpha: 0.4 + Math.random() * 0.4,
+                floatOffset: Math.random() * Math.PI * 2,
+                speed: 0.8 + Math.random() * 0.7,
+                type: Math.floor(Math.random() * 3)
+            });
+        }
+    }
+
+    // === VA CHẠM TƯỜNG ===
+    function checkCollision(x, y, radius) {
+        const gridX = Math.floor(x / TILE_SIZE);
+        const gridY = Math.floor(y / TILE_SIZE);
+        
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                const checkX = gridX + dx;
+                const checkY = gridY + dy;
+                if (checkX >= 0 && checkX < MAP_WIDTH && checkY >= 0 && checkY < MAP_HEIGHT) {
+                    if (map[checkY][checkX] === 0) {
+                        const wallLeft = checkX * TILE_SIZE;
+                        const wallRight = wallLeft + TILE_SIZE;
+                        const wallTop = checkY * TILE_SIZE;
+                        const wallBottom = wallTop + TILE_SIZE;
+                        
+                        const closestX = Math.max(wallLeft, Math.min(x, wallRight));
+                        const closestY = Math.max(wallTop, Math.min(y, wallBottom));
+                        const dxc = x - closestX;
+                        const dyc = y - closestY;
+                        const dist = Math.hypot(dxc, dyc);
+                        if (dist < radius) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    // === NHẶT VẬT PHẨM ===
+    function checkItemPickup() {
+        const gridX = Math.floor(player.x / TILE_SIZE);
+        const gridY = Math.floor(player.y / TILE_SIZE);
+        
+        for (let item of items) {
+            if (!item.collected && item.pos.x === gridX && item.pos.y === gridY) {
+                item.collected = true;
+                collectedCount++;
+                showMessage(`+1 ${item.name} (${collectedCount}/5)`, "#ffd700");
+                
+                if (collectedCount === 5) {
+                    showMessage("✨ Tất cả vật phẩm đã được tìm thấy! Hãy quay về cửa chính để thoát! ✨", "#ff6b6b");
+                }
+                break;
+            }
+        }
+    }
+
+    // === KIỂM TRA THOÁT (cửa chính ở vị trí 10,10) ===
+    function checkEscape() {
+        if (collectedCount === 5 && !escapeTriggered) {
+            const gridX = Math.floor(player.x / TILE_SIZE);
+            const gridY = Math.floor(player.y / TILE_SIZE);
+            // Cửa chính ở ô (10, 10) - trung tâm bản đồ
+            if (gridX === 10 && gridY === 10) {
+                escapeTriggered = true;
+                gameRunning = false;
+                document.getElementById('finalScore').innerText = collectedCount;
+                document.getElementById('finalKills').innerText = "Thoát thành công";
+                document.getElementById('gameOverPanel').style.display = 'flex';
+            }
+        }
+    }
+
+    function showMessage(msg, color = "#ffd700") {
+        const toast = document.getElementById('messageToast');
+        toast.textContent = msg;
+        toast.style.color = color;
+        toast.style.opacity = '1';
+        setTimeout(() => {
+            toast.style.opacity = '0';
+        }, 2500);
+    }
+
+    // === CẬP NHẬT ===
+    function update() {
+        if (!gameRunning) return;
+        
+        // Di chuyển WASD
+        let moveX = 0, moveY = 0;
+        if (keys.w) moveY -= 1;
+        if (keys.s) moveY += 1;
+        if (keys.a) moveX -= 1;
+        if (keys.d) moveX += 1;
+        
+        if (moveX !== 0 || moveY !== 0) {
+            const len = Math.hypot(moveX, moveY);
+            moveX /= len;
+            moveY /= len;
+            
+            let newX = player.x + moveX * player.speed;
+            let newY = player.y + moveY * player.speed;
+            
+            if (!checkCollision(newX, player.y, player.radius)) {
+                player.x = newX;
+            }
+            if (!checkCollision(player.x, newY, player.radius)) {
+                player.y = newY;
+            }
+        }
+        
+        // Giới hạn trong map
+        player.x = Math.min(Math.max(player.x, player.radius), MAP_WIDTH * TILE_SIZE - player.radius);
+        player.y = Math.min(Math.max(player.y, player.radius), MAP_HEIGHT * TILE_SIZE - player.radius);
+        
+        // Nhặt vật phẩm
+        checkItemPickup();
+        checkEscape();
+        
+        // Cập nhật UI
+        document.getElementById('itemsCount').innerText = collectedCount;
+        
+        // Spawn ma ngẫu nhiên
+        if (ghostSpawnTimer <= 0 && gameRunning && ghosts.length < 8) {
+            if (Math.random() < 0.3) {
+                spawnGhost();
+            }
+            ghostSpawnTimer = 180 + Math.random() * 120;
+        } else {
+            ghostSpawnTimer--;
+        }
+        
+        // Di chuyển ma
+        for (let i = 0; i < ghosts.length; i++) {
+            const g = ghosts[i];
+            const dx = player.x - g.x;
+            const dy = player.y - g.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist > 0.01) {
+                g.x += (dx / dist) * g.speed;
+                g.y += (dy / dist) * g.speed;
+            }
+            g.floatOffset += 0.05;
+            
+            // Nếu ma chạm người chơi → hiệu ứng giật mình
+            if (dist < player.radius + g.radius) {
+                showMessage("👻 Một bóng ma lướt qua người bạn! Rùng mình...", "#ff8888");
+                g.x += Math.random() * 100 - 50;
+                g.y += Math.random() * 100 - 50;
+                // Rung màn hình nhẹ
+                if (navigator.vibrate) navigator.vibrate(50);
+            }
+        }
+        
+        // Hiệu ứng ánh sáng nhấp nháy
+        flickerTimer++;
+    }
+
+    // === VẼ 3D BẰNG RAYCASTING ĐƠN GIẢN ===
+    // Tạo hiệu ứng góc nhìn thứ nhất giả lập
+    
+    let frameCount = 0;
+    
+    function draw() {
+        if (!ctx) return;
+        
+        // Cập nhật kích thước canvas
+        if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            width = canvas.width;
+            height = canvas.height;
+        }
+        
+        // === VẼ NỀN (bầu trời u ám) ===
+        const gradSky = ctx.createLinearGradient(0, 0, 0, height/2);
+        gradSky.addColorStop(0, '#0a0a1a');
+        gradSky.addColorStop(1, '#1a1a2e');
+        ctx.fillStyle = gradSky;
+        ctx.fillRect(0, 0, width, height);
+        
+        // Vẽ sàn (màu gỗ mục)
+        ctx.fillStyle = '#2a1a0a';
+        ctx.fillRect(0, height/2, width, height/2);
+        
+        // Vẽ vân sàn
+        ctx.strokeStyle = '#3a2a1a';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 30; i++) {
+            ctx.beginPath();
+            ctx.moveTo(0, height/2 + i * 15);
+            ctx.lineTo(width, height/2 + i * 15);
+            ctx.stroke();
+        }
+        
+        // === VẼ TƯỜNG BẰNG RAYCASTING ĐƠN GIẢN ===
+        const rays = 80;
+        const rayStep = width / rays;
+        const fov = Math.PI / 2.8;
+        const maxDistance = 400;
+        
+        for (let i = 0; i < rays; i++) {
+            const rayAngle = player.angle - fov/2 + (i / rays) * fov;
+            let distance = 0;
+            let hit = false;
+            let hitX = 0, hitY = 0;
+            
+            while (distance < maxDistance && !hit) {
+                distance += 4;
+                const testX = player.x + Math.cos(rayAngle) * distance;
+                const testY = player.y + Math.sin(rayAngle) * distance;
+                
+                const gridX = Math.floor(testX / TILE_SIZE);
+                const gridY = Math.floor(testY / TILE_SIZE);
+                
+                if (gridX < 0 || gridX >= MAP_WIDTH || gridY < 0 || gridY >= MAP_HEIGHT) {
+                    hit = true;
+                    break;
+                }
+                
+                if (map[gridY][gridX] === 0) {
+                    hit = true;
+                    hitX = testX;
+                    hitY = testY;
+                }
+            }
+            
+            // Tính chiều cao tường
+            const wallHeight = Math.min(height, (TILE_SIZE * 300) / (distance + 0.1));
+            const wallY = (height / 2) - wallHeight / 2;
+            
+            // Màu tường theo khoảng cách và loại phòng
+            let wallColor;
+            const distFactor = Math.min(1, distance / maxDistance);
+            const darkFactor = 0.3 + (1 - distFactor) * 0.5;
+            
+            if (distance >= maxDistance) {
+                wallColor = `rgba(20, 15, 30, 0.8)`;
+            } else {
+                const r = 40 + (1 - distFactor) * 30;
+                const g = 25 + (1 - distFactor) * 20;
+                const b = 30 + (1 - distFactor) * 25;
+                wallColor = `rgb(${r * darkFactor}, ${g * darkFactor}, ${b * darkFactor})`;
+            }
+            
+            ctx.fillStyle = wallColor;
+            ctx.fillRect(i * rayStep, wallY, rayStep + 1, wallHeight);
+            
+            // Vẽ viền tường
+            ctx.strokeStyle = `rgba(0,0,0,${0.3 + (1 - distFactor) * 0.4})`;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(i * rayStep, wallY, rayStep + 1, wallHeight);
+        }
+        
+        // === VẼ VẬT PHẨM TRÊN TƯỜNG ===
+        for (let item of items) {
+            if (!item.collected) {
+                const itemWorldX = item.pos.x * TILE_SIZE + TILE_SIZE/2;
+                const itemWorldY = item.pos.y * TILE_SIZE + TILE_SIZE/2;
+                
+                const dx = itemWorldX - player.x;
+                const dy = itemWorldY - player.y;
+                const distToItem = Math.hypot(dx, dy);
+                
+                if (distToItem < 200) {
+                    let angleToItem = Math.atan2(dy, dx);
+                    let angleDiff = angleToItem - player.angle;
+                    if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                    if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                    
+                    const screenX = (angleDiff / fov) * width + width/2;
+                    if (screenX > 0 && screenX < width && Math.abs(angleDiff) < fov/2) {
+                        const size = Math.min(60, 3000 / distToItem);
+                        ctx.font = `${size}px "Segoe UI Emoji"`;
+                        ctx.shadowBlur = 15;
+                        ctx.shadowColor = "rgba(255,200,100,0.5)";
+                        ctx.fillStyle = `rgba(255,255,200,${Math.max(0.3, 1 - distToItem/200)})`;
+                        ctx.fillText(item.icon, screenX - size/2, height/2 - size/2);
+                        ctx.shadowBlur = 0;
+                    }
+                }
+            }
+        }
+        
+        // === VẼ MA (dạng bóng mờ) ===
+        for (let g of ghosts) {
+            const dx = g.x - player.x;
+            const dy = g.y - player.y;
+            const distToGhost = Math.hypot(dx, dy);
+            
+            if (distToGhost < 250) {
+                let angleToGhost = Math.atan2(dy, dx);
+                let angleDiff = angleToGhost - player.angle;
+                if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                
+                const screenX = (angleDiff / fov) * width + width/2;
+                if (screenX > 0 && screenX < width && Math.abs(angleDiff) < fov/2) {
+                    const size = Math.min(80, 4000 / distToGhost);
+                    const ghostAlpha = g.alpha * (1 - distToGhost/250) * (0.5 + Math.sin(g.floatOffset) * 0.2);
+                    
+                    ctx.font = `${size}px "Segoe UI Emoji"`;
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = `rgba(100, 150, 255, ${ghostAlpha})`;
+                    ctx.globalAlpha = ghostAlpha + 0.3;
+                    ctx.fillStyle = `rgba(180, 200, 255, ${ghostAlpha + 0.2})`;
+                    ctx.fillText(g.type === 0 ? "👻" : (g.type === 1 ? "💀" : "👽"), screenX - size/2, height/2 - size/2 + Math.sin(g.floatOffset) * 10);
+                    ctx.globalAlpha = 1;
+                    ctx.shadowBlur = 0;
+                }
+            }
+        }
+        
+        // === VẼ HƯỚNG DẪN VẬT PHẨM ===
+        if (collectedCount < 5) {
+            let closestItem = null;
+            let closestDist = Infinity;
+            for (let item of items) {
+                if (!item.collected) {
+                    const dist = Math.hypot(
+                        (item.pos.x * TILE_SIZE + TILE_SIZE/2) - player.x,
+                        (item.pos.y * TILE_SIZE + TILE_SIZE/2) - player.y
+                    );
+                    if (dist < closestDist) {
+                        closestDist = dist;
+                        closestItem = item;
+                    }
+                }
+            }
+            
+            if (closestItem && closestDist > 50) {
+                const targetX = closestItem.pos.x * TILE_SIZE + TILE_SIZE/2;
+                const targetY = closestItem.pos.y * TILE_SIZE + TILE_SIZE/2;
+                const angleToTarget = Math.atan2(targetY - player.y, targetX - player.x);
+                let angleDiff = angleToTarget - player.angle;
+                if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                
+                const compassX = width/2 + angleDiff * 80;
+                ctx.font = "24px monospace";
+                ctx.fillStyle = `rgba(255,215,0,${0.5 + Math.sin(Date.now() / 300) * 0.3})`;
+                ctx.fillText("⬆️", compassX - 12, height - 80);
+                ctx.font = "12px monospace";
+                ctx.fillStyle = "#aa9966";
+                ctx.fillText(closestItem.name, compassX - 40, height - 60);
+            }
+        }
+        
+        // === VẼ CON TRỎ TIM ===
+        ctx.beginPath();
+        ctx.arc(width/2, height/2, 12, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255, 100, 100, ${0.6 + Math.sin(Date.now() / 200) * 0.3})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(width/2 - 8, height/2);
+        ctx.lineTo(width/2 - 3, height/2);
+        ctx.moveTo(width/2 + 3, height/2);
+        ctx.lineTo(width/2 + 8, height/2);
+        ctx.moveTo(width/2, height/2 - 8);
+        ctx.lineTo(width/2, height/2 - 3);
+        ctx.moveTo(width/2, height/2 + 3);
+        ctx.lineTo(width/2, height/2 + 8);
+        ctx.stroke();
+        
+        // Hiệu ứng nhấp nháy khi gần thoát
+        if (collectedCount === 5) {
+            const gridX = Math.floor(player.x / TILE_SIZE);
+            const gridY = Math.floor(player.y / TILE_SIZE);
+            if (gridX === 10 && gridY === 10) {
+                ctx.fillStyle = `rgba(255,215,0,${0.3 + Math.sin(Date.now() / 150) * 0.2})`;
+                ctx.fillRect(0, 0, width, height);
+            }
+        }
+        
+        frameCount++;
+    }
+
+    // === ĐIỀU KHIỂN ===
+    const keys = { w: false, a: false, s: false, d: false };
+    let mouseXCanvas = width/2, mouseYCanvas = height/2;
+    let pointerLocked = false;
+
+    function handleMouseMove(e) {
+        if (pointerLocked) {
+            const sensitivity = 0.003;
+            player.angle += e.movementX * sensitivity;
+            // Giới hạn góc
+            if (player.angle > Math.PI * 2) player.angle -= Math.PI * 2;
+            if (player.angle < 0) player.angle += Math.PI * 2;
+        }
+    }
+
+    function handleKeyDown(e) {
+        const key = e.key.toLowerCase();
+        if (key === 'w') keys.w = true;
+        if (key === 'a') keys.a = true;
+        if (key === 's') keys.s = true;
+        if (key === 'd') keys.d = true;
+        if (['w','a','s','d'].includes(key)) e.preventDefault();
+    }
+
+    function handleKeyUp(e) {
+        const key = e.key.toLowerCase();
+        if (key === 'w') keys.w = false;
+        if (key === 'a') keys.a = false;
+        if (key === 's') keys.s = false;
+        if (key === 'd') keys.d = false;
+    }
+
+    function requestPointerLock() {
+        canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock;
+        canvas.requestPointerLock();
+    }
+
+    function handlePointerLockChange() {
+        pointerLocked = document.pointerLockElement === canvas;
+    }
+
+    // === RESET GAME ===
+    function resetGame() {
+        gameRunning = true;
+        escapeTriggered = false;
+        collectedCount = 0;
+        for (let item of items) {
+            item.collected = false;
+        }
+        ghosts = [];
+        ghostSpawnTimer = 30;
+        player.x = 10 * TILE_SIZE + TILE_SIZE/2;
+        player.y = 10 * TILE_SIZE + TILE_SIZE/2;
+        player.angle = 0;
+        document.getElementById('itemsCount').innerText = "0";
+        document.getElementById('gameOverPanel').style.display = 'none';
+        showMessage("👻 Bạn bước vào căn nhà ma... Hãy tìm 5 vật phẩm để thoát!", "#ffd700");
+        
+        // Spawn vài con ma ban đầu
+        for (let i = 0; i < 3; i++) {
+            setTimeout(() => spawnGhost(), i * 500);
+        }
+    }
+
+    // === ANIMATION LOOP ===
+    function animate() {
+        update();
+        draw();
+        requestAnimationFrame(animate);
+    }
+
+    // === KHỞI TẠO ===
+    function init() {
+        resetGame();
+        
+        canvas.addEventListener('click', requestPointerLock);
+        document.addEventListener('pointerlockchange', handlePointerLockChange);
+        document.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+        
+        document.getElementById('restartBtn').addEventListener('click', () => resetGame());
+        document.getElementById('gameOverRestartBtn').addEventListener('click', () => resetGame());
+        
+        animate();
+    }
+
+    init();
+</script>
+</body>
+</html>
