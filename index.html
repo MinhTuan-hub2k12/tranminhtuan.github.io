@@ -3,50 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lớp 8E - Discord Clone</title>
+    <title>Lớp 8E - Discord Modern</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
-            scrollbar-width: thin;
+            font-family: 'Inter', sans-serif;
         }
-        .bg-discord-dark { background-color: #36393f; }
-        .bg-discord-sidebar { background-color: #2f3136; }
-        .bg-discord-channel { background-color: #2f3136; }
-        .bg-discord-input { background-color: #40444b; }
-        .bg-discord-hover:hover { background-color: #3a3d44; }
-        .text-discord-muted { color: #8e9297; }
-        .border-discord { border-color: #202225; }
-        .online-dot { background-color: #23a55a; }
-        .message:hover { background-color: #32353b; }
-        .active-channel { background-color: #393c43; }
+        
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            background-attachment: fixed;
+        }
+        
+        /* Glassmorphism effect */
+        .glass {
+            background: rgba(30, 27, 58, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .glass-card {
+            background: rgba(20, 18, 40, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            border-color: rgba(88, 101, 242, 0.5);
+            box-shadow: 0 8px 32px rgba(88, 101, 242, 0.1);
+        }
+        
+        /* Sidebar */
+        .sidebar-modern {
+            background: rgba(15, 13, 30, 0.9);
+            backdrop-filter: blur(12px);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Channel item */
+        .channel-item {
+            transition: all 0.2s ease;
+            border-radius: 8px;
+        }
+        
+        .channel-item:hover {
+            background: rgba(88, 101, 242, 0.2);
+            transform: translateX(2px);
+        }
+        
+        .channel-active {
+            background: linear-gradient(135deg, rgba(88, 101, 242, 0.3), rgba(88, 101, 242, 0.1));
+            border-left: 3px solid #5865F2;
+        }
+        
+        /* Message */
+        .message {
+            transition: all 0.2s ease;
+            border-radius: 8px;
+        }
+        
+        .message:hover {
+            background: rgba(88, 101, 242, 0.1);
+            transform: translateX(4px);
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(88, 101, 242, 0.5);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(88, 101, 242, 0.8);
+        }
+        
+        /* Input */
+        .modern-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .modern-input:focus {
+            outline: none;
+            border-color: #5865F2;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.1);
+        }
+        
+        /* Button */
+        .btn-primary {
+            background: linear-gradient(135deg, #5865F2, #4752C4);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(88, 101, 242, 0.3);
+        }
+        
+        /* Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in-up {
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        .guest-badge {
+            animation: pulse 2s infinite;
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+        }
     </style>
 </head>
-<body class="bg-discord-dark text-white">
+<body>
     <div id="app"></div>
 
     <script>
-        // ==================== KHỞI TẠO DỮ LIỆU ====================
+        // ==================== DỮ LIỆU ====================
         let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
         let users = JSON.parse(localStorage.getItem('users') || '[]');
         let messages = JSON.parse(localStorage.getItem('messages') || '[]');
-        let currentChannel = 'general';
+        let channels = JSON.parse(localStorage.getItem('channels') || '[]');
+        let currentChannel = JSON.parse(localStorage.getItem('currentChannel') || '"general"');
         
-        // Tạo tài khoản mặc định nếu chưa có
+        // Tạo dữ liệu mặc định
         if (users.length === 0) {
             users = [
-                { id: '1', username: 'cogiaochunhiem', password: '123456', role: 'teacher', avatar: '👩‍🏫', createdAt: new Date().toISOString() },
-                { id: '2', username: 'hocsinh1', password: '123456', role: 'student', avatar: '👨‍🎓', createdAt: new Date().toISOString() }
+                { id: '1', username: 'cogiaochunhiem', password: '123456', role: 'teacher', avatar: '👩‍🏫', email: 'cogiao@8e.edu.vn', createdAt: new Date().toISOString() },
+                { id: '2', username: 'minh_anh', password: '123456', role: 'student', avatar: '👧', email: 'minhanh@8e.edu.vn', createdAt: new Date().toISOString() },
+                { id: '3', username: 'duc_huy', password: '123456', role: 'student', avatar: '👦', email: 'duchuy@8e.edu.vn', createdAt: new Date().toISOString() }
             ];
             localStorage.setItem('users', JSON.stringify(users));
         }
         
-        // Tin nhắn mặc định
+        if (channels.length === 0) {
+            channels = [
+                { id: 'general', name: 'chung', icon: '#', type: 'text', description: 'Nơi trò chuyện chung của lớp 8E' },
+                { id: 'homework', name: 'bài tập', icon: '📝', type: 'text', description: 'Thảo luận bài tập và kiến thức' },
+                { id: 'announcements', name: 'thông báo', icon: '📢', type: 'text', description: 'Thông báo quan trọng từ giáo viên' },
+                { id: 'random', name: 'random', icon: '🎮', type: 'text', description: 'Giao lưu, giải trí' }
+            ];
+            localStorage.setItem('channels', JSON.stringify(channels));
+        }
+        
         if (messages.length === 0) {
             messages = [
-                { id: '1', username: 'cogiaochunhiem', content: 'Chào mừng các em đến với lớp 8E! 📚', channel: 'general', timestamp: new Date(Date.now() - 3600000).toISOString(), avatar: '👩‍🏫' },
-                { id: '2', username: 'cogiaochunhiem', content: 'Đây là nơi chúng ta sẽ trao đổi bài tập và thông tin lớp nhé!', channel: 'general', timestamp: new Date(Date.now() - 3500000).toISOString(), avatar: '👩‍🏫' },
-                { id: '3', username: 'hocsinh1', content: 'Dạ vâng ạ! Em chào cô và các bạn 👋', channel: 'general', timestamp: new Date(Date.now() - 3400000).toISOString(), avatar: '👨‍🎓' }
+                { id: '1', username: 'cogiaochunhiem', content: '✨ Chào mừng các em đến với Lớp 8E - Nơi học tập và kết nối! ✨', channel: 'general', timestamp: new Date(Date.now() - 3600000).toISOString(), avatar: '👩‍🏫' },
+                { id: '2', username: 'cogiaochunhiem', content: '💡 Các em nhớ đăng nhập để có thể nhắn tin và tạo phòng chat nhé!', channel: 'general', timestamp: new Date(Date.now() - 3500000).toISOString(), avatar: '👩‍🏫' },
+                { id: '3', username: 'minh_anh', content: 'Chào cô và các bạn! 👋', channel: 'general', timestamp: new Date(Date.now() - 3400000).toISOString(), avatar: '👧' }
             ];
             localStorage.setItem('messages', JSON.stringify(messages));
         }
@@ -55,6 +194,8 @@
         function saveData() {
             localStorage.setItem('users', JSON.stringify(users));
             localStorage.setItem('messages', JSON.stringify(messages));
+            localStorage.setItem('channels', JSON.stringify(channels));
+            localStorage.setItem('currentChannel', JSON.stringify(currentChannel));
             if (currentUser) {
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
             } else {
@@ -66,200 +207,18 @@
             const date = new Date(timestamp);
             const now = new Date();
             const diff = now - date;
-            if (diff < 60000) return 'Vừa xong';
+            if (diff < 60000) return 'vừa xong';
             if (diff < 3600000) return `${Math.floor(diff / 60000)} phút trước`;
             if (diff < 86400000) return `${Math.floor(diff / 3600000)} giờ trước`;
+            if (diff < 604800000) return `${Math.floor(diff / 86400000)} ngày trước`;
             return date.toLocaleDateString('vi-VN');
-        }
-        
-        // ==================== COMPONENTS ====================
-        
-        // Màn hình đăng nhập
-        function LoginScreen() {
-            return `
-                <div class="min-h-screen bg-gradient-to-br from-[#5865F2] to-[#4752C4] flex items-center justify-center p-4">
-                    <div class="bg-[#36393f] rounded-lg w-full max-w-md p-8 shadow-2xl">
-                        <div class="text-center mb-8">
-                            <div class="text-5xl mb-3">📚</div>
-                            <h1 class="text-3xl font-bold text-white">Lớp 8E</h1>
-                            <p class="text-discord-muted mt-2">Đăng nhập để vào lớp học</p>
-                        </div>
-                        
-                        <form id="loginForm">
-                            <div class="mb-4">
-                                <label class="block text-xs font-semibold uppercase text-discord-muted mb-1">Tên đăng nhập</label>
-                                <input type="text" id="loginUsername" class="w-full bg-[#202225] text-white rounded p-3 outline-none focus:ring-2 focus:ring-[#5865F2]" placeholder="cogiaochunhiem hoặc hocsinh1">
-                            </div>
-                            <div class="mb-6">
-                                <label class="block text-xs font-semibold uppercase text-discord-muted mb-1">Mật khẩu</label>
-                                <input type="password" id="loginPassword" class="w-full bg-[#202225] text-white rounded p-3 outline-none focus:ring-2 focus:ring-[#5865F2]" placeholder="••••••">
-                            </div>
-                            <button type="submit" class="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold py-3 rounded transition">Đăng nhập</button>
-                        </form>
-                        
-                        <div class="text-center mt-6">
-                            <span class="text-discord-muted">Chưa có tài khoản? </span>
-                            <button id="showRegisterBtn" class="text-[#5865F2] hover:underline">Đăng ký</button>
-                        </div>
-                        
-                        <div class="mt-4 p-3 bg-[#202225] rounded text-xs text-discord-muted">
-                            <p class="font-semibold mb-1">📝 Tài khoản mặc định:</p>
-                            <p>👩‍🏫 Giáo viên: cogiaochunhiem / 123456</p>
-                            <p>👨‍🎓 Học sinh: hocsinh1 / 123456</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        
-        // Màn hình đăng ký
-        function RegisterScreen() {
-            return `
-                <div class="min-h-screen bg-gradient-to-br from-[#5865F2] to-[#4752C4] flex items-center justify-center p-4">
-                    <div class="bg-[#36393f] rounded-lg w-full max-w-md p-8 shadow-2xl">
-                        <div class="text-center mb-8">
-                            <div class="text-5xl mb-3">📝</div>
-                            <h1 class="text-3xl font-bold text-white">Đăng ký</h1>
-                            <p class="text-discord-muted mt-2">Tham gia Lớp 8E</p>
-                        </div>
-                        
-                        <form id="registerForm">
-                            <div class="mb-4">
-                                <label class="block text-xs font-semibold uppercase text-discord-muted mb-1">Tên đăng nhập</label>
-                                <input type="text" id="regUsername" class="w-full bg-[#202225] text-white rounded p-3 outline-none focus:ring-2 focus:ring-[#5865F2]" placeholder="tencuaban" required>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-xs font-semibold uppercase text-discord-muted mb-1">Mật khẩu</label>
-                                <input type="password" id="regPassword" class="w-full bg-[#202225] text-white rounded p-3 outline-none focus:ring-2 focus:ring-[#5865F2]" placeholder="••••••" required>
-                            </div>
-                            <div class="mb-6">
-                                <label class="block text-xs font-semibold uppercase text-discord-muted mb-1">Xác nhận mật khẩu</label>
-                                <input type="password" id="regConfirmPassword" class="w-full bg-[#202225] text-white rounded p-3 outline-none focus:ring-2 focus:ring-[#5865F2]" placeholder="••••••" required>
-                            </div>
-                            <button type="submit" class="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold py-3 rounded transition">Đăng ký</button>
-                        </form>
-                        
-                        <div class="text-center mt-6">
-                            <span class="text-discord-muted">Đã có tài khoản? </span>
-                            <button id="showLoginBtn" class="text-[#5865F2] hover:underline">Đăng nhập</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        
-        // Giao diện chat chính (Discord-like)
-        function ChatScreen() {
-            const channelMessages = messages.filter(m => m.channel === currentChannel);
-            const isTeacher = currentUser?.role === 'teacher';
-            
-            return `
-                <div class="flex h-screen">
-                    <!-- Sidebar trái -->
-                    <div class="w-64 bg-discord-sidebar flex flex-col">
-                        <div class="p-3 shadow-md border-b border-[#202225]">
-                            <h1 class="text-lg font-bold">📚 Lớp 8E</h1>
-                            <div class="flex items-center mt-2 text-sm">
-                                <div class="w-2 h-2 online-dot rounded-full mr-2"></div>
-                                <span class="text-gray-300">${currentUser?.username || ''}</span>
-                                ${isTeacher ? '<span class="ml-2 text-xs bg-[#5865F2] px-1 rounded">GV</span>' : ''}
-                            </div>
-                        </div>
-                        
-                        <div class="flex-1 overflow-y-auto p-2">
-                            <div class="text-xs uppercase text-discord-muted font-semibold mb-2 px-2">Kênh văn bản</div>
-                            
-                            <div class="channel-item ${currentChannel === 'general' ? 'active-channel' : ''} p-2 rounded cursor-pointer flex items-center hover:bg-[#3a3d44] transition" data-channel="general">
-                                <span class="mr-2">#</span>
-                                <span class="flex-1">chung</span>
-                                <span class="text-xs text-discord-muted">${messages.filter(m => m.channel === 'general').length}</span>
-                            </div>
-                            
-                            <div class="channel-item ${currentChannel === 'homework' ? 'active-channel' : ''} p-2 rounded cursor-pointer flex items-center hover:bg-[#3a3d44] transition" data-channel="homework">
-                                <span class="mr-2">📝</span>
-                                <span class="flex-1">bài tập</span>
-                                <span class="text-xs text-discord-muted">${messages.filter(m => m.channel === 'homework').length}</span>
-                            </div>
-                            
-                            <div class="channel-item ${currentChannel === 'announcements' ? 'active-channel' : ''} p-2 rounded cursor-pointer flex items-center hover:bg-[#3a3d44] transition" data-channel="announcements">
-                                <span class="mr-2">📢</span>
-                                <span class="flex-1">thông báo</span>
-                                <span class="text-xs text-discord-muted">${messages.filter(m => m.channel === 'announcements').length}</span>
-                            </div>
-                            
-                            <div class="channel-item ${currentChannel === 'random' ? 'active-channel' : ''} p-2 rounded cursor-pointer flex items-center hover:bg-[#3a3d44] transition" data-channel="random">
-                                <span class="mr-2">🎮</span>
-                                <span class="flex-1">random</span>
-                                <span class="text-xs text-discord-muted">${messages.filter(m => m.channel === 'random').length}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="p-3 border-t border-[#202225]">
-                            <button id="logoutBtn" class="w-full text-left text-discord-muted hover:text-white text-sm py-1 flex items-center">
-                                <span class="mr-2">🚪</span> Đăng xuất
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- Khu vực chat chính -->
-                    <div class="flex-1 flex flex-col bg-discord-dark">
-                        <!-- Header channel -->
-                        <div class="h-12 shadow-sm border-b border-[#202225] flex items-center px-4">
-                            <span class="text-xl mr-2">${currentChannel === 'general' ? '#' : currentChannel === 'homework' ? '📝' : currentChannel === 'announcements' ? '📢' : '🎮'}</span>
-                            <span class="font-semibold">${getChannelName(currentChannel)}</span>
-                            <span class="text-discord-muted text-sm ml-2">· ${channelMessages.length} tin nhắn</span>
-                        </div>
-                        
-                        <!-- Danh sách tin nhắn -->
-                        <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-2">
-                            ${channelMessages.map(msg => `
-                                <div class="message flex items-start hover:bg-[#32353b] p-2 rounded transition group">
-                                    <div class="text-3xl mr-3">${getUserAvatar(msg.username)}</div>
-                                    <div class="flex-1">
-                                        <div class="flex items-baseline gap-2">
-                                            <span class="font-semibold hover:underline cursor-pointer">${msg.username}</span>
-                                            <span class="text-xs text-discord-muted">${formatTime(msg.timestamp)}</span>
-                                            ${msg.username === currentUser?.username ? `<button class="delete-msg opacity-0 group-hover:opacity-100 text-red-400 text-xs ml-2" data-msg-id="${msg.id}">🗑️</button>` : ''}
-                                        </div>
-                                        <div class="text-gray-200 break-words">${escapeHtml(msg.content)}</div>
-                                    </div>
-                                </div>
-                            `).reverse().join('')}
-                            ${channelMessages.length === 0 ? '<div class="text-center text-discord-muted py-10">✨ Chưa có tin nhắn nào. Hãy gửi tin nhắn đầu tiên!</div>' : ''}
-                        </div>
-                        
-                        <!-- Ô nhập tin nhắn -->
-                        <div class="p-4">
-                            <div class="bg-discord-input rounded-lg flex items-center">
-                                <input type="text" id="messageInput" class="flex-1 bg-transparent text-white p-3 outline-none" placeholder="Nhập tin nhắn... ${isTeacher ? '(Giáo viên có thể @mọi người)' : ''}" autocomplete="off">
-                                <button id="sendBtn" class="bg-[#5865F2] hover:bg-[#4752C4] text-white px-4 py-2 m-1 rounded transition">
-                                    Gửi
-                                </button>
-                            </div>
-                            <div class="text-xs text-discord-muted mt-2">
-                                ${isTeacher ? '🔔 Bạn là giáo viên - tin nhắn của bạn sẽ được đánh dấu' : '💬 Hãy tương tác lịch sự nhé!'}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function getChannelName(channel) {
-            const names = {
-                general: 'chung',
-                homework: 'bài tập',
-                announcements: 'thông báo',
-                random: 'random'
-            };
-            return names[channel] || channel;
         }
         
         function getUserAvatar(username) {
             const user = users.find(u => u.username === username);
             if (user && user.avatar) return user.avatar;
             if (username === 'cogiaochunhiem') return '👩‍🏫';
-            return '👨‍🎓';
+            return '👤';
         }
         
         function escapeHtml(text) {
@@ -268,15 +227,45 @@
             return div.innerHTML;
         }
         
-        // ==================== XỬ LÝ SỰ KIỆN ====================
+        // ==================== MODAL ====================
+        function showModal(title, content, onConfirm) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-overlay fade-in-up';
+            modal.innerHTML = `
+                <div class="glass-card rounded-2xl p-6 max-w-md w-full mx-4 transform transition-all">
+                    <h3 class="text-xl font-bold mb-4">${title}</h3>
+                    <div class="mb-6">${content}</div>
+                    <div class="flex gap-3">
+                        <button class="cancel-btn flex-1 px-4 py-2 rounded-lg bg-gray-600/30 hover:bg-gray-600/50 transition">Hủy</button>
+                        <button class="confirm-btn flex-1 px-4 py-2 rounded-lg btn-primary text-white font-semibold">Xác nhận</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            modal.querySelector('.cancel-btn').onclick = () => modal.remove();
+            modal.querySelector('.confirm-btn').onclick = () => {
+                onConfirm();
+                modal.remove();
+            };
+        }
         
+        // ==================== XỬ LÝ TIN NHẮN ====================
         function sendMessage() {
+            if (!currentUser) {
+                showModal('Cần đăng nhập', '<p class="text-gray-300">Bạn cần đăng nhập để nhắn tin. Hãy đăng ký tài khoản miễn phí!</p>', () => {
+                    window._showRegister = false;
+                    renderApp();
+                });
+                return;
+            }
+            
             const input = document.getElementById('messageInput');
             const content = input.value.trim();
             if (!content) return;
             
             const newMessage = {
-                id: Date.now().toString(),
+                id: Date.now().toString() + Math.random(),
                 username: currentUser.username,
                 content: content,
                 channel: currentChannel,
@@ -289,7 +278,6 @@
             input.value = '';
             renderApp();
             
-            // Auto scroll
             setTimeout(() => {
                 const container = document.getElementById('messagesContainer');
                 if (container) container.scrollTop = container.scrollHeight;
@@ -297,17 +285,53 @@
         }
         
         function deleteMessage(msgId) {
-            messages = messages.filter(m => m.id !== msgId);
+            if (!currentUser) return;
+            const msg = messages.find(m => m.id === msgId);
+            if (msg && (msg.username === currentUser.username || currentUser.role === 'teacher')) {
+                messages = messages.filter(m => m.id !== msgId);
+                saveData();
+                renderApp();
+            }
+        }
+        
+        // ==================== TẠO PHÒNG CHAT ====================
+        function createNewChannel() {
+            if (!currentUser) {
+                showModal('Cần đăng nhập', '<p class="text-gray-300">Chỉ thành viên đã đăng nhập mới được tạo phòng chat mới!</p>', () => {
+                    window._showRegister = false;
+                    renderApp();
+                });
+                return;
+            }
+            
+            const name = prompt('🏷️ Tên phòng chat (không dấu, VD: hoc_tap):', '');
+            if (!name) return;
+            
+            const displayName = prompt('📛 Tên hiển thị (VD: Học tập):', name);
+            if (!displayName) return;
+            
+            if (channels.find(c => c.id === name)) {
+                alert('Phòng chat đã tồn tại!');
+                return;
+            }
+            
+            const newChannel = {
+                id: name,
+                name: displayName,
+                icon: '💬',
+                type: 'text',
+                description: `Phòng chat ${displayName} do ${currentUser.username} tạo`,
+                createdBy: currentUser.username,
+                createdAt: new Date().toISOString()
+            };
+            
+            channels.push(newChannel);
             saveData();
+            currentChannel = name;
             renderApp();
         }
         
-        function logout() {
-            currentUser = null;
-            saveData();
-            renderApp();
-        }
-        
+        // ==================== AUTH ====================
         function handleLogin(e) {
             e.preventDefault();
             const username = document.getElementById('loginUsername').value.trim();
@@ -319,23 +343,29 @@
                 saveData();
                 renderApp();
             } else {
-                alert('Sai tên đăng nhập hoặc mật khẩu!');
+                alert('❌ Sai tên đăng nhập hoặc mật khẩu!');
             }
         }
         
         function handleRegister(e) {
             e.preventDefault();
             const username = document.getElementById('regUsername').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
             const password = document.getElementById('regPassword').value;
             const confirm = document.getElementById('regConfirmPassword').value;
             
-            if (!username || !password) {
+            if (!username || !email || !password) {
                 alert('Vui lòng nhập đầy đủ thông tin!');
                 return;
             }
             
             if (password !== confirm) {
                 alert('Mật khẩu xác nhận không khớp!');
+                return;
+            }
+            
+            if (password.length < 4) {
+                alert('Mật khẩu phải có ít nhất 4 ký tự!');
                 return;
             }
             
@@ -347,116 +377,357 @@
             const newUser = {
                 id: Date.now().toString(),
                 username: username,
+                email: email,
                 password: password,
                 role: 'student',
-                avatar: '👨‍🎓',
+                avatar: ['👨‍🎓', '👩‍🎓', '🧑‍🎓', '👧', '👦'][Math.floor(Math.random() * 5)],
                 createdAt: new Date().toISOString()
             };
             
             users.push(newUser);
             saveData();
             
-            alert('Đăng ký thành công! Vui lòng đăng nhập.');
+            alert('✅ Đăng ký thành công! Vui lòng đăng nhập.');
+            window._showRegister = false;
             renderApp();
         }
         
-        // ==================== RENDER CHÍNH ====================
+        function logout() {
+            currentUser = null;
+            saveData();
+            renderApp();
+        }
         
+        // ==================== GIAO DIỆN ====================
+        
+        // Màn hình chào mừng (tham quan)
+        function GuestWelcomeScreen() {
+            return `
+                <div class="min-h-screen flex items-center justify-center p-4 fade-in-up">
+                    <div class="text-center max-w-2xl">
+                        <div class="text-8xl mb-6 animate-bounce">📚</div>
+                        <h1 class="text-5xl md:text-6xl font-bold bg-gradient-to-r from-[#5865F2] to-[#EB459E] bg-clip-text text-transparent mb-4">
+                            Lớp 8E
+                        </h1>
+                        <p class="text-xl text-gray-300 mb-6">Nền tảng kết nối học tập hiện đại</p>
+                        <div class="glass-card rounded-2xl p-6 mb-8">
+                            <p class="text-gray-300 mb-3">✨ <strong class="text-white">Đang tham quan</strong> - Bạn có thể xem nội dung nhưng chưa thể nhắn tin</p>
+                            <p class="text-sm text-gray-400">💡 Đăng nhập hoặc đăng ký để nhắn tin và tạo phòng chat</p>
+                        </div>
+                        <div class="flex gap-4 justify-center">
+                            <button id="guestViewBtn" class="px-6 py-3 rounded-xl glass hover:border-[#5865F2] transition font-semibold">
+                                👁️ Tham quan lớp học
+                            </button>
+                            <button id="showLoginFromGuestBtn" class="px-6 py-3 rounded-xl btn-primary text-white font-semibold">
+                                🔑 Đăng nhập
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Màn hình đăng nhập
+        function LoginScreen() {
+            return `
+                <div class="min-h-screen flex items-center justify-center p-4 fade-in-up">
+                    <div class="glass-card rounded-2xl p-8 w-full max-w-md">
+                        <div class="text-center mb-8">
+                            <div class="text-6xl mb-3">🔐</div>
+                            <h2 class="text-3xl font-bold text-white mb-2">Chào mừng trở lại</h2>
+                            <p class="text-gray-400">Đăng nhập để tham gia lớp 8E</p>
+                        </div>
+                        
+                        <form id="loginForm">
+                            <div class="mb-4">
+                                <label class="block text-sm font-semibold text-gray-300 mb-2">Tên đăng nhập</label>
+                                <input type="text" id="loginUsername" class="modern-input w-full rounded-xl p-3 text-white" placeholder="cogiaochunhiem / minh_anh" autocomplete="off">
+                            </div>
+                            <div class="mb-6">
+                                <label class="block text-sm font-semibold text-gray-300 mb-2">Mật khẩu</label>
+                                <input type="password" id="loginPassword" class="modern-input w-full rounded-xl p-3 text-white" placeholder="••••••">
+                            </div>
+                            <button type="submit" class="btn-primary w-full py-3 rounded-xl text-white font-semibold">Đăng nhập</button>
+                        </form>
+                        
+                        <div class="text-center mt-6">
+                            <span class="text-gray-400">Chưa có tài khoản? </span>
+                            <button id="showRegisterBtn" class="text-[#5865F2] hover:underline font-semibold">Đăng ký ngay</button>
+                        </div>
+                        
+                        <div class="mt-6 p-4 glass rounded-xl text-sm">
+                            <p class="font-semibold text-gray-300 mb-2">📝 Tài khoản mẫu:</p>
+                            <p class="text-gray-400">👩‍🏫 Giáo viên: <strong class="text-white">cogiaochunhiem</strong> / 123456</p>
+                            <p class="text-gray-400">👧 Học sinh: <strong class="text-white">minh_anh</strong> / 123456</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Màn hình đăng ký
+        function RegisterScreen() {
+            return `
+                <div class="min-h-screen flex items-center justify-center p-4 fade-in-up">
+                    <div class="glass-card rounded-2xl p-8 w-full max-w-md">
+                        <div class="text-center mb-8">
+                            <div class="text-6xl mb-3">📝</div>
+                            <h2 class="text-3xl font-bold text-white mb-2">Tham gia lớp 8E</h2>
+                            <p class="text-gray-400">Tạo tài khoản miễn phí</p>
+                        </div>
+                        
+                        <form id="registerForm">
+                            <div class="mb-4">
+                                <label class="block text-sm font-semibold text-gray-300 mb-2">Tên đăng nhập</label>
+                                <input type="text" id="regUsername" class="modern-input w-full rounded-xl p-3 text-white" placeholder="ten_cua_ban" autocomplete="off">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-semibold text-gray-300 mb-2">Email</label>
+                                <input type="email" id="regEmail" class="modern-input w-full rounded-xl p-3 text-white" placeholder="email@example.com">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-semibold text-gray-300 mb-2">Mật khẩu</label>
+                                <input type="password" id="regPassword" class="modern-input w-full rounded-xl p-3 text-white" placeholder="•••••• (ít nhất 4 ký tự)">
+                            </div>
+                            <div class="mb-6">
+                                <label class="block text-sm font-semibold text-gray-300 mb-2">Xác nhận mật khẩu</label>
+                                <input type="password" id="regConfirmPassword" class="modern-input w-full rounded-xl p-3 text-white" placeholder="••••••">
+                            </div>
+                            <button type="submit" class="btn-primary w-full py-3 rounded-xl text-white font-semibold">Đăng ký</button>
+                        </form>
+                        
+                        <div class="text-center mt-6">
+                            <span class="text-gray-400">Đã có tài khoản? </span>
+                            <button id="showLoginBtn" class="text-[#5865F2] hover:underline font-semibold">Đăng nhập</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Giao diện chat chính (hiện đại)
+        function ChatScreen() {
+            const channelMessages = messages.filter(m => m.channel === currentChannel);
+            const currentChannelInfo = channels.find(c => c.id === currentChannel);
+            const isTeacher = currentUser?.role === 'teacher';
+            const isGuest = !currentUser;
+            
+            return `
+                <div class="flex h-screen">
+                    <!-- Sidebar -->
+                    <div class="w-72 sidebar-modern flex flex-col">
+                        <div class="p-5 border-b border-white/5">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h1 class="text-xl font-bold bg-gradient-to-r from-[#5865F2] to-[#EB459E] bg-clip-text text-transparent">Lớp 8E</h1>
+                                    <p class="text-xs text-gray-400 mt-1">Học tập & Kết nối</p>
+                                </div>
+                                ${!isGuest ? `<div class="text-2xl">${currentUser.avatar}</div>` : '<div class="guest-badge text-2xl">👁️</div>'}
+                            </div>
+                            
+                            ${!isGuest ? `
+                                <div class="mt-3 p-2 glass rounded-lg">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                        <span class="text-sm font-medium">${currentUser.username}</span>
+                                        ${isTeacher ? '<span class="text-xs bg-[#5865F2] px-2 py-0.5 rounded-full">Giáo viên</span>' : '<span class="text-xs bg-gray-600 px-2 py-0.5 rounded-full">Học sinh</span>'}
+                                    </div>
+                                </div>
+                            ` : `
+                                <div class="mt-3 p-2 glass rounded-lg text-center">
+                                    <p class="text-xs text-gray-400">👁️ Đang tham quan</p>
+                                    <button id="guestLoginBtn" class="text-xs text-[#5865F2] hover:underline mt-1">Đăng nhập để nhắn tin →</button>
+                                </div>
+                            `}
+                        </div>
+                        
+                        <div class="flex-1 overflow-y-auto p-3">
+                            <div class="flex items-center justify-between mb-3 px-2">
+                                <div class="text-xs uppercase font-semibold text-gray-400">Kênh văn bản</div>
+                                ${!isGuest ? `
+                                    <button id="createChannelBtn" class="text-gray-400 hover:text-white transition text-lg">+</button>
+                                ` : `
+                                    <span class="text-gray-500 text-xs">🔒</span>
+                                `}
+                            </div>
+                            
+                            ${channels.map(ch => `
+                                <div class="channel-item ${currentChannel === ch.id ? 'channel-active' : ''} p-2 mb-1 cursor-pointer flex items-center gap-2" data-channel="${ch.id}">
+                                    <span class="text-lg">${ch.icon === '#' ? '#' : ch.icon}</span>
+                                    <span class="flex-1 text-sm">${ch.name}</span>
+                                    <span class="text-xs text-gray-500">${messages.filter(m => m.channel === ch.id).length}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div class="p-3 border-t border-white/5">
+                            ${!isGuest ? `
+                                <button id="logoutBtn" class="w-full text-left text-gray-400 hover:text-white text-sm py-2 px-2 rounded-lg hover:bg-white/5 transition flex items-center gap-2">
+                                    <span>🚪</span> Đăng xuất
+                                </button>
+                            ` : `
+                                <button id="guestToLoginBtn" class="w-full text-left text-[#5865F2] hover:text-white text-sm py-2 px-2 rounded-lg hover:bg-white/5 transition flex items-center gap-2">
+                                    <span>🔑</span> Đăng nhập
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                    
+                    <!-- Main chat area -->
+                    <div class="flex-1 flex flex-col">
+                        <!-- Header -->
+                        <div class="h-14 border-b border-white/5 flex items-center px-6 glass">
+                            <span class="text-2xl mr-3">${currentChannelInfo?.icon || '#'}</span>
+                            <div>
+                                <div class="font-semibold">${currentChannelInfo?.name || currentChannel}</div>
+                                <div class="text-xs text-gray-400">${currentChannelInfo?.description || 'Kênh trò chuyện'}</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Messages -->
+                        <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-2">
+                            ${channelMessages.length === 0 ? `
+                                <div class="text-center text-gray-500 py-20">
+                                    <div class="text-6xl mb-4">💬</div>
+                                    <p>Chưa có tin nhắn nào</p>
+                                    <p class="text-sm mt-2">Hãy là người đầu tiên nhắn tin!</p>
+                                </div>
+                            ` : channelMessages.map(msg => `
+                                <div class="message p-3 rounded-lg transition group" data-msg-id="${msg.id}">
+                                    <div class="flex gap-3">
+                                        <div class="text-3xl">${getUserAvatar(msg.username)}</div>
+                                        <div class="flex-1">
+                                            <div class="flex items-baseline gap-2 flex-wrap">
+                                                <span class="font-semibold hover:underline cursor-pointer">${msg.username}</span>
+                                                <span class="text-xs text-gray-400">${formatTime(msg.timestamp)}</span>
+                                                ${msg.username === currentUser?.username || isTeacher ? 
+                                                    `<button class="delete-msg opacity-0 group-hover:opacity-100 text-red-400 text-xs ml-2 transition" data-msg-id="${msg.id}">🗑️ Xóa</button>` 
+                                                    : ''}
+                                                ${msg.username === 'cogiaochunhiem' ? '<span class="text-xs bg-[#5865F2] px-1.5 py-0.5 rounded-full">GV</span>' : ''}
+                                            </div>
+                                            <div class="text-gray-200 break-words mt-1">${escapeHtml(msg.content)}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).reverse().join('')}
+                        </div>
+                        
+                        <!-- Input area -->
+                        <div class="p-4 border-t border-white/5">
+                            <div class="glass rounded-xl flex items-center">
+                                <input type="text" id="messageInput" class="flex-1 bg-transparent text-white p-3 outline-none rounded-xl" 
+                                    placeholder="${isGuest ? '🔒 Đăng nhập để nhắn tin...' : (isTeacher ? 'Nhập tin nhắn... (Giáo viên có thể xóa tin nhắn)' : 'Nhập tin nhắn...')}" 
+                                    ${isGuest ? 'disabled' : ''} autocomplete="off">
+                                <button id="sendBtn" class="btn-primary text-white px-5 py-2 m-1 rounded-xl transition font-semibold" ${isGuest ? 'disabled' : ''}>
+                                    Gửi
+                                </button>
+                            </div>
+                            ${isGuest ? `
+                                <div class="text-center mt-3">
+                                    <button id="guestLoginBottomBtn" class="text-sm text-[#5865F2] hover:underline">🔑 Đăng nhập để tham gia trò chuyện</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // ==================== RENDER ====================
         function renderApp() {
             const app = document.getElementById('app');
             let html = '';
             
-            if (!currentUser) {
-                // Kiểm tra xem đang ở màn hình đăng ký hay đăng nhập
+            // Kiểm tra chế độ tham quan
+            const isGuestMode = window._guestMode === true;
+            
+            if (!currentUser && !isGuestMode) {
                 const showRegister = window._showRegister || false;
-                if (showRegister) {
-                    html = RegisterScreen();
-                } else {
-                    html = LoginScreen();
-                }
-            } else {
+                html = showRegister ? RegisterScreen() : LoginScreen();
+            } else if (!currentUser && isGuestMode) {
                 html = ChatScreen();
+            } else if (currentUser) {
+                html = ChatScreen();
+            } else {
+                html = GuestWelcomeScreen();
             }
             
             app.innerHTML = html;
             
-            // Gắn sự kiện sau khi render
-            if (!currentUser) {
+            // Gắn sự kiện
+            if (!currentUser && !isGuestMode) {
                 const loginForm = document.getElementById('loginForm');
-                if (loginForm) {
-                    loginForm.addEventListener('submit', handleLogin);
-                }
+                if (loginForm) loginForm.addEventListener('submit', handleLogin);
                 
                 const registerForm = document.getElementById('registerForm');
-                if (registerForm) {
-                    registerForm.addEventListener('submit', handleRegister);
-                }
+                if (registerForm) registerForm.addEventListener('submit', handleRegister);
                 
                 const showRegisterBtn = document.getElementById('showRegisterBtn');
-                if (showRegisterBtn) {
-                    showRegisterBtn.addEventListener('click', () => {
-                        window._showRegister = true;
-                        renderApp();
-                    });
-                }
+                if (showRegisterBtn) showRegisterBtn.onclick = () => { window._showRegister = true; renderApp(); };
                 
                 const showLoginBtn = document.getElementById('showLoginBtn');
-                if (showLoginBtn) {
-                    showLoginBtn.addEventListener('click', () => {
-                        window._showRegister = false;
-                        renderApp();
-                    });
-                }
-            } else {
-                // Gắn sự kiện chat
+                if (showLoginBtn) showLoginBtn.onclick = () => { window._showRegister = false; renderApp(); };
+            } 
+            else if (!currentUser && isGuestMode) {
+                // Guest đang xem chat
+                const guestLoginBtn = document.getElementById('guestLoginBtn');
+                const guestLoginBottomBtn = document.getElementById('guestLoginBottomBtn');
+                const guestToLoginBtn = document.getElementById('guestToLoginBtn');
+                
+                const goToLogin = () => { window._guestMode = false; window._showRegister = false; renderApp(); };
+                if (guestLoginBtn) guestLoginBtn.onclick = goToLogin;
+                if (guestLoginBottomBtn) guestLoginBottomBtn.onclick = goToLogin;
+                if (guestToLoginBtn) guestToLoginBtn.onclick = goToLogin;
+                
+                // Chuyển kênh (guest vẫn xem được)
+                document.querySelectorAll('.channel-item').forEach(el => {
+                    el.onclick = () => {
+                        const channel = el.dataset.channel;
+                        if (channel) { currentChannel = channel; saveData(); renderApp(); }
+                    };
+                });
+            }
+            else if (currentUser) {
+                // User đã đăng nhập
                 const sendBtn = document.getElementById('sendBtn');
                 const messageInput = document.getElementById('messageInput');
-                
-                if (sendBtn) {
-                    sendBtn.addEventListener('click', sendMessage);
-                }
-                if (messageInput) {
-                    messageInput.addEventListener('keypress', (e) => {
-                        if (e.key === 'Enter') sendMessage();
-                    });
-                }
+                if (sendBtn) sendBtn.onclick = sendMessage;
+                if (messageInput) messageInput.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
                 
                 const logoutBtn = document.getElementById('logoutBtn');
-                if (logoutBtn) {
-                    logoutBtn.addEventListener('click', logout);
-                }
+                if (logoutBtn) logoutBtn.onclick = logout;
                 
-                // Gắn sự kiện chuyển kênh
+                const createChannelBtn = document.getElementById('createChannelBtn');
+                if (createChannelBtn) createChannelBtn.onclick = createNewChannel;
+                
                 document.querySelectorAll('.channel-item').forEach(el => {
-                    el.addEventListener('click', (e) => {
+                    el.onclick = () => {
                         const channel = el.dataset.channel;
-                        if (channel) {
-                            currentChannel = channel;
-                            renderApp();
-                        }
-                    });
+                        if (channel) { currentChannel = channel; saveData(); renderApp(); }
+                    };
                 });
                 
-                // Gắn sự kiện xóa tin nhắn
                 document.querySelectorAll('.delete-msg').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
+                    btn.onclick = (e) => {
                         e.stopPropagation();
                         const msgId = btn.dataset.msgId;
-                        if (confirm('Bạn có chắc muốn xóa tin nhắn này?')) {
-                            deleteMessage(msgId);
-                        }
-                    });
+                        if (confirm('Xóa tin nhắn này?')) deleteMessage(msgId);
+                    };
                 });
                 
-                // Auto scroll xuống cuối
                 const container = document.getElementById('messagesContainer');
-                if (container) {
-                    container.scrollTop = container.scrollHeight;
-                }
+                if (container) container.scrollTop = container.scrollHeight;
+            }
+            else {
+                // Màn hình chào mừng
+                const guestViewBtn = document.getElementById('guestViewBtn');
+                const showLoginFromGuestBtn = document.getElementById('showLoginFromGuestBtn');
+                
+                if (guestViewBtn) guestViewBtn.onclick = () => { window._guestMode = true; renderApp(); };
+                if (showLoginFromGuestBtn) showLoginFromGuestBtn.onclick = () => { window._guestMode = false; window._showRegister = false; renderApp(); };
             }
         }
         
-        // Khởi chạy ứng dụng
         renderApp();
     </script>
 </body>
