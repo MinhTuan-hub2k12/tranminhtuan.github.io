@@ -3,712 +3,553 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lớp 8E - Discord Modern</title>
+    <title>8E Universe | The Next Gen Social Network</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+
     <style>
-        * {
-            font-family: 'Inter', sans-serif;
+        /* CSS Tùy biến sâu */
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --bg-dark: #0b0f1a;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --chat-bg: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?ixlib=rb-4.0.3&auto=format&fit=crop&w=1964&q=80');
         }
-        
+
         body {
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            background-attachment: fixed;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-dark);
+            color: #e2e8f0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Hiệu ứng kính mờ nâng cao */
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .active-gradient {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+
+        /* Tùy chỉnh thanh cuộn */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+        /* Animation cho các tab */
+        .tab-content { display: none; animation: fadeIn 0.4s ease-out; }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Nền Chat tùy chỉnh (Giống Messenger) */
+        #chat-main-area {
+            background-image: var(--chat-bg);
+            background-size: cover;
+            background-position: center;
+            position: relative;
         }
         
-        .glass {
-            background: rgba(30, 27, 58, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        #chat-main-area::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: rgba(11, 15, 26, 0.75); /* Làm tối nền để đọc tin nhắn rõ hơn */
+            z-index: 0;
         }
-        
-        .glass-card {
-            background: rgba(20, 18, 40, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            transition: all 0.3s ease;
+
+        .message-bubble {
+            max-width: 70%;
+            z-index: 1;
+            position: relative;
         }
-        
-        .glass-card:hover {
-            border-color: rgba(88, 101, 242, 0.5);
-            box-shadow: 0 8px 32px rgba(88, 101, 242, 0.1);
+
+        /* Diễn đàn */
+        .forum-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        
-        .sidebar-modern {
-            background: rgba(15, 13, 30, 0.95);
-            backdrop-filter: blur(12px);
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        .channel-item {
-            transition: all 0.2s ease;
-            border-radius: 8px;
-        }
-        
-        .channel-item:hover {
-            background: rgba(88, 101, 242, 0.2);
-            transform: translateX(2px);
-        }
-        
-        .channel-active {
-            background: linear-gradient(135deg, rgba(88, 101, 242, 0.3), rgba(88, 101, 242, 0.1));
-            border-left: 3px solid #5865F2;
-        }
-        
-        .message {
-            transition: all 0.2s ease;
-            border-radius: 8px;
-        }
-        
-        .message:hover {
-            background: rgba(88, 101, 242, 0.1);
-            transform: translateX(4px);
-        }
-        
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: rgba(88, 101, 242, 0.5);
-            border-radius: 10px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(88, 101, 242, 0.8);
-        }
-        
-        .modern-input {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-        
-        .modern-input:focus {
-            outline: none;
-            border-color: #5865F2;
-            background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.1);
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #5865F2, #4752C4);
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(88, 101, 242, 0.3);
-        }
-        
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .fade-in-up {
-            animation: fadeInUp 0.5s ease-out;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        .guest-badge {
-            animation: pulse 2s infinite;
+        .forum-card:hover {
+            transform: scale(1.02);
+            background: rgba(255, 255, 255, 0.07);
         }
     </style>
 </head>
 <body>
-    <div id="app"></div>
+
+    <div id="auth-layer" class="fixed inset-0 z-[100] flex items-center justify-center bg-[#05070a]">
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-900/20 rounded-full blur-[120px]"></div>
+            <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-900/20 rounded-full blur-[120px]"></div>
+        </div>
+
+        <div class="glass-panel p-10 rounded-3xl w-full max-w-md relative z-10 mx-4">
+            <div class="text-center mb-8">
+                <div class="inline-block p-4 rounded-2xl active-gradient mb-4 shadow-lg shadow-indigo-500/20">
+                    <i class="fa-solid fa-rocket text-3xl"></i>
+                </div>
+                <h1 class="text-4xl font-extrabold tracking-tight">8E UNIVERSE</h1>
+                <p class="text-slate-400 mt-2">Dành riêng cho các cư dân lớp 8E</p>
+            </div>
+
+            <div id="login-form">
+                <div class="space-y-4">
+                    <div class="relative">
+                        <i class="fa-solid fa-user absolute left-4 top-4 text-slate-500"></i>
+                        <input type="text" id="user-input" placeholder="Tên đăng nhập" class="w-full bg-slate-800/50 border border-slate-700 p-3.5 pl-12 rounded-xl focus:outline-none focus:border-indigo-500 transition">
+                    </div>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-4 top-4 text-slate-500"></i>
+                        <input type="password" id="pass-input" placeholder="Mật khẩu" class="w-full bg-slate-800/50 border border-slate-700 p-3.5 pl-12 rounded-xl focus:outline-none focus:border-indigo-500 transition">
+                    </div>
+                </div>
+                <button onclick="handleLogin()" class="w-full mt-8 py-4 active-gradient rounded-xl font-bold text-lg hover:opacity-90 transition transform active:scale-95 shadow-xl shadow-indigo-500/20">
+                    Đăng nhập ngay
+                </button>
+                <p class="text-center mt-6 text-sm text-slate-400">
+                    Bạn là thành viên mới? <a href="#" onclick="toggleAuth()" class="text-indigo-400 font-semibold">Tạo tài khoản</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-container" class="flex h-screen w-full opacity-0 transition-opacity duration-1000">
+        
+        <nav class="w-20 bg-black/40 flex flex-col items-center py-6 gap-5 border-r border-slate-800/50 z-20">
+            <div onclick="switchMainTab('home')" class="w-14 h-14 active-gradient rounded-2xl flex items-center justify-center cursor-pointer shadow-lg shadow-indigo-500/30 group relative">
+                <i class="fa-solid fa-house text-xl"></i>
+                <span class="absolute left-20 bg-white text-black px-2 py-1 rounded text-xs font-bold opacity-0 group-hover:opacity-100 transition-all pointer-events-none">Trang chủ</span>
+            </div>
+            
+            <div class="h-[2px] w-8 bg-slate-800"></div>
+
+            <div class="flex flex-col gap-3" id="server-list">
+                <div onclick="switchMainTab('chat')" class="w-14 h-14 glass-panel rounded-full flex items-center justify-center cursor-pointer hover:rounded-2xl transition-all duration-300 hover:bg-indigo-600 group relative">
+                    <span class="font-bold text-sm">C1</span>
+                    <span class="absolute left-20 bg-white text-black px-2 py-1 rounded text-xs font-bold opacity-0 group-hover:opacity-100 transition-all">Server 8E Toàn diện</span>
+                </div>
+                <div class="w-14 h-14 glass-panel rounded-full flex items-center justify-center cursor-pointer hover:rounded-2xl transition-all duration-300 hover:bg-purple-600 group relative">
+                    <span class="font-bold text-sm">G2</span>
+                    <span class="absolute left-20 bg-white text-black px-2 py-1 rounded text-xs font-bold opacity-0 group-hover:opacity-100 transition-all">Team Gaming 8E</span>
+                </div>
+            </div>
+
+            <button onclick="createNewServer()" class="w-14 h-14 glass-panel rounded-full flex items-center justify-center cursor-pointer hover:bg-emerald-500 hover:rounded-2xl transition-all group relative">
+                <i class="fa-solid fa-plus text-emerald-400 group-hover:text-white"></i>
+            </button>
+
+            <div class="mt-auto flex flex-col gap-5">
+                <div onclick="openSettings()" class="w-14 h-14 flex items-center justify-center cursor-pointer text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-gear text-2xl"></i>
+                </div>
+                <div onclick="location.reload()" class="w-14 h-14 flex items-center justify-center cursor-pointer text-rose-500 hover:bg-rose-500/10 rounded-2xl transition">
+                    <i class="fa-solid fa-power-off text-2xl"></i>
+                </div>
+            </div>
+        </nav>
+
+        <main class="flex-1 flex overflow-hidden">
+            
+            <div class="w-72 bg-[#0d121f] flex flex-col border-r border-slate-800/50">
+                <div class="p-6 h-20 flex items-center justify-between border-b border-slate-800/50">
+                    <h2 class="font-extrabold text-xl tracking-tight">8E HUB</h2>
+                    <i class="fa-solid fa-chevron-down text-xs text-slate-500"></i>
+                </div>
+
+                <div class="flex-1 overflow-y-auto custom-scroll p-4">
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between px-2 mb-3">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Kênh Chat</span>
+                            <i class="fa-solid fa-plus text-[10px] cursor-pointer hover:text-white"></i>
+                        </div>
+                        <div class="space-y-1">
+                            <div onclick="openChannel('tán-gẫu')" class="channel-item active flex items-center gap-3 p-3 rounded-xl bg-indigo-500/10 text-indigo-400 cursor-pointer">
+                                <i class="fa-solid fa-hashtag"></i> <span class="font-semibold">tán-gẫu</span>
+                            </div>
+                            <div onclick="openChannel('giải-đáp-toán')" class="channel-item flex items-center gap-3 p-3 rounded-xl text-slate-400 hover:bg-slate-800/50 cursor-pointer transition">
+                                <i class="fa-solid fa-hashtag"></i> <span class="font-semibold">giải-đáp-toán</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between px-2 mb-3">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Diễn đàn 8E</span>
+                        </div>
+                        <div class="space-y-1">
+                            <div onclick="switchMainTab('forum')" class="flex items-center gap-3 p-3 rounded-xl text-slate-400 hover:bg-slate-800/50 cursor-pointer transition">
+                                <i class="fa-solid fa-bullhorn text-rose-400"></i> <span class="font-semibold">Thông báo lớp</span>
+                            </div>
+                            <div onclick="switchMainTab('forum')" class="flex items-center gap-3 p-3 rounded-xl text-slate-400 hover:bg-slate-800/50 cursor-pointer transition">
+                                <i class="fa-solid fa-newspaper text-amber-400"></i> <span class="font-semibold">Tin tức 24h</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between px-2 mb-3">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Bạn bè</span>
+                            <span onclick="inviteFriend()" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full cursor-pointer hover:bg-indigo-500 transition">MỜI</span>
+                        </div>
+                        <div class="space-y-3 px-2" id="friend-list">
+                            </div>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-black/20 m-4 rounded-2xl flex items-center gap-3 border border-slate-800/50">
+                    <div class="relative">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" class="w-10 h-10 rounded-full bg-slate-700">
+                        <div class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#0d121f] rounded-full"></div>
+                    </div>
+                    <div class="flex-1 overflow-hidden">
+                        <p class="font-bold text-sm truncate" id="display-name">Admin_8E</p>
+                        <p class="text-[10px] text-slate-500">Đang hoạt động</p>
+                    </div>
+                    <i class="fa-solid fa-microphone text-xs text-slate-500 cursor-pointer hover:text-white"></i>
+                </div>
+            </div>
+
+            <div class="flex-1 flex flex-col relative">
+                
+                <div id="tab-chat" class="tab-content active flex flex-col h-full">
+                    <header class="h-20 border-b border-slate-800/50 flex items-center justify-between px-8 bg-[#0b0f1a]/50 backdrop-blur-md z-10">
+                        <div class="flex items-center gap-4">
+                            <div class="p-2.5 bg-slate-800 rounded-xl text-indigo-400">
+                                <i class="fa-solid fa-hashtag text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg" id="current-channel-name">tán-gẫu</h3>
+                                <p class="text-xs text-slate-500 italic">Nơi 8E buôn dưa lê xuyên lục địa</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-6 text-slate-400">
+                            <i onclick="changeBackground()" class="fa-solid fa-palette text-xl cursor-pointer hover:text-indigo-400 transition" title="Đổi nền chat"></i>
+                            <i class="fa-solid fa-phone-volume text-xl cursor-pointer hover:text-emerald-400 transition"></i>
+                            <i class="fa-solid fa-circle-info text-xl cursor-pointer hover:text-white"></i>
+                        </div>
+                    </header>
+
+                    <div id="chat-main-area" class="flex-1 overflow-y-auto p-8 flex flex-col gap-6">
+                        <div class="flex gap-4 items-start">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sassy" class="w-10 h-10 rounded-2xl bg-indigo-500">
+                            <div class="flex flex-col">
+                                <div class="flex items-center gap-3 mb-1">
+                                    <span class="font-bold text-indigo-400">Lớp Trưởng</span>
+                                    <span class="text-[10px] text-slate-500 uppercase">Hôm nay lúc 08:20</span>
+                                </div>
+                                <div class="message-bubble glass-panel p-4 rounded-2xl rounded-tl-none border-l-4 border-l-indigo-500">
+                                    Chào buổi sáng cả nhà 8E! Nhớ làm bài tập C++ cô giao nhé. 💻
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4 items-start flex-row-reverse">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" class="w-10 h-10 rounded-2xl bg-slate-700">
+                            <div class="flex flex-col items-end">
+                                <div class="flex items-center gap-3 mb-1">
+                                    <span class="text-[10px] text-slate-500 uppercase">Hôm nay lúc 08:25</span>
+                                    <span class="font-bold text-emerald-400">Bạn</span>
+                                </div>
+                                <div class="message-bubble active-gradient p-4 rounded-2xl rounded-tr-none text-white shadow-lg shadow-indigo-500/10">
+                                    Lớp trưởng yên tâm, em code xong trong 5 phút! 😎
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <footer class="p-6 bg-[#0b0f1a]">
+                        <div class="glass-panel rounded-2xl flex items-center p-2 border border-slate-700/50 shadow-2xl">
+                            <button class="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-white transition">
+                                <i class="fa-solid fa-circle-plus text-xl"></i>
+                            </button>
+                            <input type="text" id="msg-input" placeholder="Gửi tin nhắn tới #tán-gẫu..." class="flex-1 bg-transparent border-none outline-none px-4 text-slate-200">
+                            <div class="flex items-center gap-2 px-2">
+                                <button class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-amber-400"><i class="fa-solid fa-face-grin-stars text-xl"></i></button>
+                                <button onclick="sendMessage()" class="w-12 h-12 active-gradient rounded-xl text-white shadow-lg shadow-indigo-500/30 transition transform hover:scale-105">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+
+                <div id="tab-forum" class="tab-content h-full overflow-y-auto p-10 bg-slate-900/30">
+                    <div class="max-w-4xl mx-auto">
+                        <div class="flex justify-between items-center mb-10">
+                            <div>
+                                <h2 class="text-4xl font-extrabold mb-2">Diễn đàn 8E</h2>
+                                <p class="text-slate-400">Nơi lưu trữ các bài viết và thảo luận chuyên sâu</p>
+                            </div>
+                            <button class="px-6 py-3 active-gradient rounded-xl font-bold shadow-lg shadow-indigo-500/20">
+                                <i class="fa-solid fa-pen-nib mr-2"></i> Viết bài mới
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-4">
+                            <div class="forum-card glass-panel p-6 rounded-3xl flex items-center gap-6 cursor-pointer">
+                                <div class="w-16 h-16 rounded-2xl bg-rose-500/20 text-rose-500 flex items-center justify-center text-2xl">
+                                    <i class="fa-solid fa-bolt"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-xl font-bold mb-1">Thông báo quan trọng từ Nhà trường</h4>
+                                    <p class="text-slate-400 text-sm">Lịch thi giữa học kì 2 đã được cập nhật...</p>
+                                    <div class="flex gap-4 mt-3 text-[10px] text-slate-500 uppercase font-bold tracking-widest">
+                                        <span><i class="fa-solid fa-user mr-1"></i> Admin</span>
+                                        <span><i class="fa-solid fa-calendar mr-1"></i> 22/04/2026</span>
+                                        <span><i class="fa-solid fa-comment mr-1"></i> 48 bình luận</span>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-chevron-right text-slate-700"></i>
+                            </div>
+
+                            <div class="forum-card glass-panel p-6 rounded-3xl flex items-center gap-6 cursor-pointer">
+                                <div class="w-16 h-16 rounded-2xl bg-blue-500/20 text-blue-500 flex items-center justify-center text-2xl">
+                                    <i class="fa-solid fa-code"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-xl font-bold mb-1">Góc Hacking & C++ cơ bản</h4>
+                                    <p class="text-slate-400 text-sm">Tổng hợp các tools hay cho Kali Linux và lộ trình học C++ cho dân 8E...</p>
+                                    <div class="flex gap-4 mt-3 text-[10px] text-slate-500 uppercase font-bold tracking-widest">
+                                        <span><i class="fa-solid fa-user mr-1"></i> Tuấn_Coder</span>
+                                        <span><i class="fa-solid fa-calendar mr-1"></i> 20/04/2026</span>
+                                        <span><i class="fa-solid fa-comment mr-1"></i> 125 bình luận</span>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-chevron-right text-slate-700"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+
+    <div id="bg-modal" class="fixed inset-0 z-[110] hidden items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="glass-panel p-8 rounded-3xl w-[500px]">
+            <h3 class="text-2xl font-bold mb-6 text-center">Tùy chỉnh nền Chat</h3>
+            <div class="grid grid-cols-3 gap-4 mb-8">
+                <div onclick="setChatBg('classic')" class="h-24 rounded-xl cursor-pointer border-2 border-transparent hover:border-indigo-500 transition overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200" class="w-full h-full object-cover">
+                </div>
+                <div onclick="setChatBg('cyber')" class="h-24 rounded-xl cursor-pointer border-2 border-transparent hover:border-indigo-500 transition overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=200" class="w-full h-full object-cover">
+                </div>
+                <div onclick="setChatBg('nature')" class="h-24 rounded-xl cursor-pointer border-2 border-transparent hover:border-indigo-500 transition overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=200" class="w-full h-full object-cover">
+                </div>
+                <div onclick="setChatBg('dark')" class="h-24 bg-slate-900 rounded-xl cursor-pointer border-2 border-transparent hover:border-indigo-500"></div>
+                <div onclick="setChatBg('minimal')" class="h-24 bg-indigo-900 rounded-xl cursor-pointer border-2 border-transparent hover:border-indigo-500"></div>
+                <div class="h-24 glass-panel flex items-center justify-center rounded-xl cursor-pointer hover:bg-slate-800">
+                    <i class="fa-solid fa-plus"></i>
+                </div>
+            </div>
+            <button onclick="closeBgModal()" class="w-full py-3 bg-slate-800 rounded-xl font-bold">Hoàn tất</button>
+        </div>
+    </div>
 
     <script>
-        // ==================== DỮ LIỆU KHỞI TẠO ====================
-        let currentUser = null;
-        let users = [];
-        let messages = [];
-        let channels = [];
-        let currentChannel = 'general';
-        
-        // Load dữ liệu từ localStorage
-        function loadData() {
-            const savedUser = localStorage.getItem('currentUser');
-            if (savedUser && savedUser !== 'null') {
-                try {
-                    currentUser = JSON.parse(savedUser);
-                } catch(e) { currentUser = null; }
-            } else {
-                currentUser = null;
+        // Khởi tạo dữ liệu giả lập
+        const friends = [
+            { name: "Nguyễn Văn A", status: "online", img: "https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka" },
+            { name: "Trần Thị B", status: "offline", img: "https://api.dicebear.com/7.x/avataaars/svg?seed=Bob" },
+            { name: "Lê Văn C", status: "online", img: "https://api.dicebear.com/7.x/avataaars/svg?seed=Chris" },
+            { name: "Hoàng Diệu D", status: "online", img: "https://api.dicebear.com/7.x/avataaars/svg?seed=Daisy" }
+        ];
+
+        // 1. Xử lý Đăng nhập
+        function handleLogin() {
+            const user = document.getElementById('user-input').value;
+            const pass = document.getElementById('pass-input').value;
+
+            if(user === "" || pass === "") {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi...',
+                    text: 'Vui lòng nhập đầy đủ thông tin tài khoản!',
+                    background: '#1e293b',
+                    color: '#fff'
+                });
+                return;
             }
+
+            // Hiệu ứng chuyển cảnh chuyên nghiệp
+            const authLayer = document.getElementById('auth-layer');
+            const appContainer = document.getElementById('app-container');
             
-            const savedUsers = localStorage.getItem('users');
-            if (savedUsers) {
-                users = JSON.parse(savedUsers);
-            } else {
-                users = [];
-            }
-            
-            const savedMessages = localStorage.getItem('messages');
-            if (savedMessages) {
-                messages = JSON.parse(savedMessages);
-            } else {
-                messages = [];
-            }
-            
-            const savedChannels = localStorage.getItem('channels');
-            if (savedChannels) {
-                channels = JSON.parse(savedChannels);
-            } else {
-                channels = [];
-            }
-            
-            const savedChannel = localStorage.getItem('currentChannel');
-            if (savedChannel && savedChannel !== 'null') {
-                currentChannel = savedChannel;
-            } else {
-                currentChannel = 'general';
-            }
-        }
-        
-        // Lưu dữ liệu
-        function saveData() {
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            localStorage.setItem('users', JSON.stringify(users));
-            localStorage.setItem('messages', JSON.stringify(messages));
-            localStorage.setItem('channels', JSON.stringify(channels));
-            localStorage.setItem('currentChannel', currentChannel);
-        }
-        
-        // Tạo dữ liệu mặc định nếu chưa có
-        function initDefaultData() {
-            if (users.length === 0) {
-                users = [
-                    { id: '1', username: 'cogiaochunhiem', password: '123456', role: 'teacher', avatar: '👩‍🏫', email: 'cogiao@8e.edu.vn' },
-                    { id: '2', username: 'minh_anh', password: '123456', role: 'student', avatar: '👧', email: 'minhanh@8e.edu.vn' },
-                    { id: '3', username: 'duc_huy', password: '123456', role: 'student', avatar: '👦', email: 'duchuy@8e.edu.vn' }
-                ];
-            }
-            
-            if (channels.length === 0) {
-                channels = [
-                    { id: 'general', name: 'chung', icon: '#', description: 'Nơi trò chuyện chung của lớp 8E' },
-                    { id: 'homework', name: 'bài tập', icon: '📝', description: 'Thảo luận bài tập và kiến thức' },
-                    { id: 'announcements', name: 'thông báo', icon: '📢', description: 'Thông báo quan trọng từ giáo viên' },
-                    { id: 'random', name: 'random', icon: '🎮', description: 'Giao lưu, giải trí' }
-                ];
-            }
-            
-            if (messages.length === 0) {
-                messages = [
-                    { id: '1', username: 'cogiaochunhiem', content: '✨ Chào mừng các em đến với Lớp 8E! ✨', channel: 'general', timestamp: new Date(Date.now() - 3600000).toISOString() },
-                    { id: '2', username: 'cogiaochunhiem', content: '💡 Các em nhớ đăng nhập để có thể nhắn tin nhé!', channel: 'general', timestamp: new Date(Date.now() - 3500000).toISOString() },
-                    { id: '3', username: 'minh_anh', content: 'Chào cô và các bạn! 👋', channel: 'general', timestamp: new Date(Date.now() - 3400000).toISOString() }
-                ];
-            }
-            
-            saveData();
-        }
-        
-        // Format thời gian
-        function formatTime(timestamp) {
-            const date = new Date(timestamp);
-            const now = new Date();
-            const diff = now - date;
-            if (diff < 60000) return 'vừa xong';
-            if (diff < 3600000) return `${Math.floor(diff / 60000)} phút trước`;
-            if (diff < 86400000) return `${Math.floor(diff / 3600000)} giờ trước`;
-            return date.toLocaleDateString('vi-VN');
-        }
-        
-        function getUserAvatar(username) {
-            const user = users.find(u => u.username === username);
-            if (user && user.avatar) return user.avatar;
-            return '👤';
-        }
-        
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-        
-        // Gửi tin nhắn
-        function sendMessage() {
-            if (!currentUser) {
-                alert('🔐 Vui lòng đăng nhập để nhắn tin!');
-                return false;
-            }
-            
-            const input = document.getElementById('messageInput');
-            if (!input) return false;
-            
-            const content = input.value.trim();
-            if (!content) return false;
-            
-            const newMessage = {
-                id: Date.now().toString() + Math.random(),
-                username: currentUser.username,
-                content: content,
-                channel: currentChannel,
-                timestamp: new Date().toISOString()
-            };
-            
-            messages.push(newMessage);
-            saveData();
-            input.value = '';
-            renderApp();
+            authLayer.style.transition = 'all 0.8s ease';
+            authLayer.style.opacity = '0';
+            authLayer.style.transform = 'scale(1.1)';
             
             setTimeout(() => {
-                const container = document.getElementById('messagesContainer');
-                if (container) container.scrollTop = container.scrollHeight;
-            }, 100);
-            
-            return true;
+                authLayer.classList.add('hidden');
+                appContainer.classList.remove('opacity-0');
+                document.getElementById('display-name').innerText = user;
+                renderFriends();
+                
+                Swal.fire({
+                    position: 'top-end',
+                    icon: 'success',
+                    title: `Chào mừng ${user} tới 8E!`,
+                    showConfirmButton: false,
+                    timer: 1500,
+                    background: '#1e293b',
+                    color: '#fff'
+                });
+            }, 800);
         }
-        
-        // Xóa tin nhắn
-        function deleteMessage(msgId) {
-            if (!currentUser) return;
-            const msg = messages.find(m => m.id === msgId);
-            if (msg && (msg.username === currentUser.username || currentUser.role === 'teacher')) {
-                if (confirm('Xóa tin nhắn này?')) {
-                    messages = messages.filter(m => m.id !== msgId);
-                    saveData();
-                    renderApp();
-                }
-            }
-        }
-        
-        // Tạo phòng chat mới
-        function createNewChannel() {
-            if (!currentUser) {
-                alert('🔐 Vui lòng đăng nhập để tạo phòng chat!');
-                return;
-            }
+
+        // 2. Chuyển đổi Tab Chính (Home/Chat/Forum)
+        function switchMainTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
             
-            const id = prompt('🏷️ Tên phòng (không dấu, VD: hoc_tap):', '');
-            if (!id) return;
-            
-            const name = prompt('📛 Tên hiển thị (VD: Học tập):', id);
-            if (!name) return;
-            
-            if (channels.find(c => c.id === id)) {
-                alert('❌ Phòng chat đã tồn tại!');
-                return;
-            }
-            
-            channels.push({
-                id: id,
-                name: name,
-                icon: '💬',
-                description: `Phòng chat do ${currentUser.username} tạo`
-            });
-            
-            saveData();
-            currentChannel = id;
-            renderApp();
-        }
-        
-        // Đăng nhập
-        function handleLogin(e) {
-            e.preventDefault();
-            const username = document.getElementById('loginUsername').value.trim();
-            const password = document.getElementById('loginPassword').value;
-            
-            const user = users.find(u => u.username === username && u.password === password);
-            if (user) {
-                currentUser = { id: user.id, username: user.username, role: user.role, avatar: user.avatar };
-                saveData();
-                renderApp();
-            } else {
-                alert('❌ Sai tên đăng nhập hoặc mật khẩu!\n\n📝 Tài khoản mẫu:\n👩‍🏫 cogiaochunhiem / 123456\n👧 minh_anh / 123456');
+            // Animation hiệu ứng
+            if(tabName === 'forum') {
+                document.getElementById('current-channel-name').innerText = "Diễn đàn lớp";
             }
         }
-        
-        // Đăng ký
-        function handleRegister(e) {
-            e.preventDefault();
-            const username = document.getElementById('regUsername').value.trim();
-            const email = document.getElementById('regEmail').value.trim();
-            const password = document.getElementById('regPassword').value;
-            const confirm = document.getElementById('regConfirmPassword').value;
-            
-            if (!username || !email || !password) {
-                alert('❌ Vui lòng nhập đầy đủ thông tin!');
-                return;
-            }
-            
-            if (password !== confirm) {
-                alert('❌ Mật khẩu xác nhận không khớp!');
-                return;
-            }
-            
-            if (password.length < 4) {
-                alert('❌ Mật khẩu phải có ít nhất 4 ký tự!');
-                return;
-            }
-            
-            if (users.find(u => u.username === username)) {
-                alert('❌ Tên đăng nhập đã tồn tại!');
-                return;
-            }
-            
-            const avatars = ['👨‍🎓', '👩‍🎓', '🧑‍🎓', '👧', '👦', '🌟', '⭐'];
-            const newUser = {
-                id: Date.now().toString(),
-                username: username,
-                email: email,
-                password: password,
-                role: 'student',
-                avatar: avatars[Math.floor(Math.random() * avatars.length)]
+
+        // 3. Render danh sách bạn bè
+        function renderFriends() {
+            const container = document.getElementById('friend-list');
+            container.innerHTML = friends.map(f => `
+                <div class="flex items-center gap-3 p-2 hover:bg-slate-800/50 rounded-xl cursor-pointer group transition">
+                    <div class="relative">
+                        <img src="${f.img}" class="w-8 h-8 rounded-full bg-slate-700">
+                        <div class="absolute bottom-0 right-0 w-2.5 h-2.5 ${f.status === 'online' ? 'bg-emerald-500' : 'bg-slate-600'} border-2 border-[#0d121f] rounded-full"></div>
+                    </div>
+                    <span class="text-sm font-medium ${f.status === 'online' ? 'text-slate-200' : 'text-slate-500'} group-hover:text-white transition">${f.name}</span>
+                </div>
+            `).join('');
+        }
+
+        // 4. Gửi tin nhắn (Hiệu ứng Messenger)
+        function sendMessage() {
+            const input = document.getElementById('msg-input');
+            const message = input.value.trim();
+            if(!message) return;
+
+            const chatArea = document.getElementById('chat-main-area');
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            const msgHTML = `
+                <div class="flex gap-4 items-start flex-row-reverse animate-[fadeIn_0.3s_ease-out]">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" class="w-10 h-10 rounded-2xl bg-slate-700">
+                    <div class="flex flex-col items-end">
+                        <div class="flex items-center gap-3 mb-1">
+                            <span class="text-[10px] text-slate-500 uppercase">Hôm nay lúc ${time}</span>
+                            <span class="font-bold text-emerald-400">Bạn</span>
+                        </div>
+                        <div class="message-bubble active-gradient p-4 rounded-2xl rounded-tr-none text-white shadow-lg shadow-indigo-500/10">
+                            ${message}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            chatArea.insertAdjacentHTML('beforeend', msgHTML);
+            input.value = "";
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        // 5. Tùy chỉnh Background (Messenger)
+        function changeBackground() {
+            document.getElementById('bg-modal').classList.remove('hidden');
+            document.getElementById('bg-modal').classList.add('flex');
+        }
+
+        function closeBgModal() {
+            document.getElementById('bg-modal').classList.remove('flex');
+            document.getElementById('bg-modal').classList.add('hidden');
+        }
+
+        function setChatBg(theme) {
+            const area = document.getElementById('chat-main-area');
+            const urls = {
+                classic: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200',
+                cyber: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200',
+                nature: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200'
             };
-            
-            users.push(newUser);
-            saveData();
-            
-            alert('✅ Đăng ký thành công! Vui lòng đăng nhập.');
-            window.showRegister = false;
-            renderApp();
-        }
-        
-        function logout() {
-            currentUser = null;
-            saveData();
-            renderApp();
-        }
-        
-        // ==================== GIAO DIỆN ====================
-        
-        function GuestWelcomeScreen() {
-            return `
-                <div class="min-h-screen flex items-center justify-center p-4 fade-in-up">
-                    <div class="text-center max-w-2xl">
-                        <div class="text-8xl mb-6 animate-bounce">📚</div>
-                        <h1 class="text-5xl md:text-6xl font-bold bg-gradient-to-r from-[#5865F2] to-[#EB459E] bg-clip-text text-transparent mb-4">
-                            Lớp 8E
-                        </h1>
-                        <p class="text-xl text-gray-300 mb-6">Nền tảng kết nối học tập hiện đại</p>
-                        <div class="glass-card rounded-2xl p-6 mb-8">
-                            <p class="text-gray-300 mb-3">✨ <strong class="text-white">Tham quan miễn phí</strong> - Xem nội dung lớp học</p>
-                            <p class="text-sm text-gray-400">💡 Đăng nhập để nhắn tin và tạo phòng chat</p>
-                        </div>
-                        <div class="flex gap-4 justify-center flex-wrap">
-                            <button id="guestViewBtn" class="px-6 py-3 rounded-xl glass hover:border-[#5865F2] transition font-semibold cursor-pointer">
-                                👁️ Tham quan lớp học
-                            </button>
-                            <button id="showLoginBtn" class="px-6 py-3 rounded-xl btn-primary text-white font-semibold cursor-pointer">
-                                🔑 Đăng nhập
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function LoginScreen() {
-            return `
-                <div class="min-h-screen flex items-center justify-center p-4 fade-in-up">
-                    <div class="glass-card rounded-2xl p-8 w-full max-w-md">
-                        <div class="text-center mb-8">
-                            <div class="text-6xl mb-3">🔐</div>
-                            <h2 class="text-3xl font-bold text-white mb-2">Chào mừng trở lại</h2>
-                            <p class="text-gray-400">Đăng nhập để tham gia lớp 8E</p>
-                        </div>
-                        
-                        <form id="loginForm">
-                            <div class="mb-4">
-                                <label class="block text-sm font-semibold text-gray-300 mb-2">Tên đăng nhập</label>
-                                <input type="text" id="loginUsername" class="modern-input w-full rounded-xl p-3 text-white" placeholder="cogiaochunhiem" autocomplete="off">
-                            </div>
-                            <div class="mb-6">
-                                <label class="block text-sm font-semibold text-gray-300 mb-2">Mật khẩu</label>
-                                <input type="password" id="loginPassword" class="modern-input w-full rounded-xl p-3 text-white" placeholder="••••••">
-                            </div>
-                            <button type="submit" class="btn-primary w-full py-3 rounded-xl text-white font-semibold cursor-pointer">Đăng nhập</button>
-                        </form>
-                        
-                        <div class="text-center mt-6">
-                            <span class="text-gray-400">Chưa có tài khoản? </span>
-                            <button id="showRegisterBtn" class="text-[#5865F2] hover:underline font-semibold cursor-pointer">Đăng ký ngay</button>
-                        </div>
-                        
-                        <div class="mt-6 p-4 glass rounded-xl text-sm">
-                            <p class="font-semibold text-gray-300 mb-2">📝 Tài khoản mẫu:</p>
-                            <p class="text-gray-400">👩‍🏫 Giáo viên: <strong class="text-white">cogiaochunhiem</strong> / 123456</p>
-                            <p class="text-gray-400">👧 Học sinh: <strong class="text-white">minh_anh</strong> / 123456</p>
-                            <p class="text-gray-400">👦 Học sinh: <strong class="text-white">duc_huy</strong> / 123456</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function RegisterScreen() {
-            return `
-                <div class="min-h-screen flex items-center justify-center p-4 fade-in-up">
-                    <div class="glass-card rounded-2xl p-8 w-full max-w-md">
-                        <div class="text-center mb-8">
-                            <div class="text-6xl mb-3">📝</div>
-                            <h2 class="text-3xl font-bold text-white mb-2">Tham gia lớp 8E</h2>
-                            <p class="text-gray-400">Tạo tài khoản miễn phí</p>
-                        </div>
-                        
-                        <form id="registerForm">
-                            <div class="mb-4">
-                                <label class="block text-sm font-semibold text-gray-300 mb-2">Tên đăng nhập</label>
-                                <input type="text" id="regUsername" class="modern-input w-full rounded-xl p-3 text-white" placeholder="ten_cua_ban" autocomplete="off">
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-sm font-semibold text-gray-300 mb-2">Email</label>
-                                <input type="email" id="regEmail" class="modern-input w-full rounded-xl p-3 text-white" placeholder="email@example.com">
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-sm font-semibold text-gray-300 mb-2">Mật khẩu</label>
-                                <input type="password" id="regPassword" class="modern-input w-full rounded-xl p-3 text-white" placeholder="•••••• (ít nhất 4 ký tự)">
-                            </div>
-                            <div class="mb-6">
-                                <label class="block text-sm font-semibold text-gray-300 mb-2">Xác nhận mật khẩu</label>
-                                <input type="password" id="regConfirmPassword" class="modern-input w-full rounded-xl p-3 text-white" placeholder="••••••">
-                            </div>
-                            <button type="submit" class="btn-primary w-full py-3 rounded-xl text-white font-semibold cursor-pointer">Đăng ký</button>
-                        </form>
-                        
-                        <div class="text-center mt-6">
-                            <span class="text-gray-400">Đã có tài khoản? </span>
-                            <button id="showLoginBtn" class="text-[#5865F2] hover:underline font-semibold cursor-pointer">Đăng nhập</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function ChatScreen() {
-            const channelMessages = messages.filter(m => m.channel === currentChannel);
-            const currentChannelInfo = channels.find(c => c.id === currentChannel);
-            const isTeacher = currentUser?.role === 'teacher';
-            const isGuest = !currentUser;
-            
-            return `
-                <div class="flex h-screen">
-                    <div class="w-72 sidebar-modern flex flex-col">
-                        <div class="p-5 border-b border-white/5">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h1 class="text-xl font-bold bg-gradient-to-r from-[#5865F2] to-[#EB459E] bg-clip-text text-transparent">Lớp 8E</h1>
-                                    <p class="text-xs text-gray-400 mt-1">Học tập & Kết nối</p>
-                                </div>
-                                ${!isGuest ? `<div class="text-3xl">${currentUser.avatar}</div>` : '<div class="guest-badge text-2xl">👁️</div>'}
-                            </div>
-                            
-                            ${!isGuest ? `
-                                <div class="mt-3 p-2 glass rounded-lg">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                        <span class="text-sm font-medium">${currentUser.username}</span>
-                                        ${isTeacher ? '<span class="text-xs bg-[#5865F2] px-2 py-0.5 rounded-full">Giáo viên</span>' : '<span class="text-xs bg-gray-600 px-2 py-0.5 rounded-full">Học sinh</span>'}
-                                    </div>
-                                </div>
-                            ` : `
-                                <div class="mt-3 p-2 glass rounded-lg text-center">
-                                    <p class="text-xs text-gray-400">👁️ Đang tham quan</p>
-                                    <button id="guestLoginBtn" class="text-xs text-[#5865F2] hover:underline mt-1 cursor-pointer">Đăng nhập để nhắn tin →</button>
-                                </div>
-                            `}
-                        </div>
-                        
-                        <div class="flex-1 overflow-y-auto p-3">
-                            <div class="flex items-center justify-between mb-3 px-2">
-                                <div class="text-xs uppercase font-semibold text-gray-400">Kênh văn bản</div>
-                                ${!isGuest ? `
-                                    <button id="createChannelBtn" class="text-gray-400 hover:text-white transition text-xl cursor-pointer">+</button>
-                                ` : `
-                                    <span class="text-gray-500 text-xs">🔒</span>
-                                `}
-                            </div>
-                            
-                            ${channels.map(ch => `
-                                <div class="channel-item ${currentChannel === ch.id ? 'channel-active' : ''} p-2 mb-1 cursor-pointer flex items-center gap-2" data-channel="${ch.id}">
-                                    <span class="text-lg">${ch.icon === '#' ? '#' : ch.icon}</span>
-                                    <span class="flex-1 text-sm">${ch.name}</span>
-                                    <span class="text-xs text-gray-500">${messages.filter(m => m.channel === ch.id).length}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                        
-                        <div class="p-3 border-t border-white/5">
-                            ${!isGuest ? `
-                                <button id="logoutBtn" class="w-full text-left text-gray-400 hover:text-white text-sm py-2 px-2 rounded-lg hover:bg-white/5 transition flex items-center gap-2 cursor-pointer">
-                                    <span>🚪</span> Đăng xuất
-                                </button>
-                            ` : `
-                                <button id="guestToLoginBtn" class="w-full text-left text-[#5865F2] hover:text-white text-sm py-2 px-2 rounded-lg hover:bg-white/5 transition flex items-center gap-2 cursor-pointer">
-                                    <span>🔑</span> Đăng nhập
-                                </button>
-                            `}
-                        </div>
-                    </div>
-                    
-                    <div class="flex-1 flex flex-col">
-                        <div class="h-14 border-b border-white/5 flex items-center px-6 glass">
-                            <span class="text-2xl mr-3">${currentChannelInfo?.icon || '#'}</span>
-                            <div>
-                                <div class="font-semibold">${currentChannelInfo?.name || currentChannel}</div>
-                                <div class="text-xs text-gray-400">${currentChannelInfo?.description || 'Kênh trò chuyện'}</div>
-                            </div>
-                        </div>
-                        
-                        <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-2">
-                            ${channelMessages.length === 0 ? `
-                                <div class="text-center text-gray-500 py-20">
-                                    <div class="text-6xl mb-4">💬</div>
-                                    <p>Chưa có tin nhắn nào</p>
-                                    <p class="text-sm mt-2">Hãy là người đầu tiên nhắn tin!</p>
-                                </div>
-                            ` : channelMessages.slice().reverse().map(msg => `
-                                <div class="message p-3 rounded-lg transition group">
-                                    <div class="flex gap-3">
-                                        <div class="text-3xl">${getUserAvatar(msg.username)}</div>
-                                        <div class="flex-1">
-                                            <div class="flex items-baseline gap-2 flex-wrap">
-                                                <span class="font-semibold">${msg.username}</span>
-                                                <span class="text-xs text-gray-400">${formatTime(msg.timestamp)}</span>
-                                                ${msg.username === currentUser?.username || isTeacher ? 
-                                                    `<button class="delete-msg opacity-0 group-hover:opacity-100 text-red-400 text-xs ml-2 transition cursor-pointer" data-msg-id="${msg.id}">🗑️ Xóa</button>` 
-                                                    : ''}
-                                                ${msg.username === 'cogiaochunhiem' ? '<span class="text-xs bg-[#5865F2] px-1.5 py-0.5 rounded-full">GV</span>' : ''}
-                                            </div>
-                                            <div class="text-gray-200 break-words mt-1">${escapeHtml(msg.content)}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                        
-                        <div class="p-4 border-t border-white/5">
-                            <div class="glass rounded-xl flex items-center">
-                                <input type="text" id="messageInput" class="flex-1 bg-transparent text-white p-3 outline-none rounded-xl" 
-                                    placeholder="${isGuest ? '🔒 Đăng nhập để nhắn tin...' : 'Nhập tin nhắn...'}" 
-                                    ${isGuest ? 'disabled' : ''} autocomplete="off">
-                                <button id="sendBtn" class="btn-primary text-white px-5 py-2 m-1 rounded-xl transition font-semibold cursor-pointer" ${isGuest ? 'disabled' : ''}>
-                                    Gửi
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        
-        // ==================== RENDER CHÍNH ====================
-        let currentView = 'welcome'; // welcome, login, register, guest, chat
-        
-        function renderApp() {
-            loadData();
-            
-            const app = document.getElementById('app');
-            let html = '';
-            
-            if (currentUser) {
-                html = ChatScreen();
-                currentView = 'chat';
-            } else if (currentView === 'login') {
-                html = LoginScreen();
-            } else if (currentView === 'register') {
-                html = RegisterScreen();
-            } else if (currentView === 'guest') {
-                html = ChatScreen();
+
+            if(urls[theme]) {
+                area.style.backgroundImage = `url('${urls[theme]}')`;
+            } else if(theme === 'dark') {
+                area.style.backgroundImage = 'none';
+                area.style.backgroundColor = '#0b0f1a';
             } else {
-                html = GuestWelcomeScreen();
-                currentView = 'welcome';
+                area.style.backgroundImage = 'none';
+                area.style.backgroundColor = '#312e81';
             }
             
-            app.innerHTML = html;
-            attachEvents();
+            Swal.fire({
+                toast: true,
+                position: 'bottom-end',
+                title: 'Đã cập nhật hình nền!',
+                showConfirmButton: false,
+                timer: 2000,
+                background: '#1e293b',
+                color: '#fff'
+            });
         }
-        
-        function attachEvents() {
-            if (currentView === 'welcome') {
-                const guestBtn = document.getElementById('guestViewBtn');
-                const loginBtn = document.getElementById('showLoginBtn');
-                if (guestBtn) guestBtn.onclick = () => { currentView = 'guest'; renderApp(); };
-                if (loginBtn) loginBtn.onclick = () => { currentView = 'login'; renderApp(); };
-            }
-            else if (currentView === 'login') {
-                const form = document.getElementById('loginForm');
-                if (form) form.onsubmit = handleLogin;
-                const registerBtn = document.getElementById('showRegisterBtn');
-                if (registerBtn) registerBtn.onclick = () => { currentView = 'register'; renderApp(); };
-            }
-            else if (currentView === 'register') {
-                const form = document.getElementById('registerForm');
-                if (form) form.onsubmit = handleRegister;
-                const loginBtn = document.getElementById('showLoginBtn');
-                if (loginBtn) loginBtn.onclick = () => { currentView = 'login'; renderApp(); };
-            }
-            else if (currentView === 'guest' || currentView === 'chat') {
-                // Chuyển kênh
-                document.querySelectorAll('.channel-item').forEach(el => {
-                    el.onclick = () => {
-                        const channel = el.dataset.channel;
-                        if (channel) {
-                            currentChannel = channel;
-                            saveData();
-                            renderApp();
-                        }
-                    };
-                });
-                
-                // Nút đăng nhập trong guest mode
-                const guestLoginBtn = document.getElementById('guestLoginBtn');
-                const guestToLoginBtn = document.getElementById('guestToLoginBtn');
-                if (guestLoginBtn) guestLoginBtn.onclick = () => { currentView = 'login'; renderApp(); };
-                if (guestToLoginBtn) guestToLoginBtn.onclick = () => { currentView = 'login'; renderApp(); };
-                
-                // Nút đăng xuất
-                const logoutBtn = document.getElementById('logoutBtn');
-                if (logoutBtn) logoutBtn.onclick = logout;
-                
-                // Tạo phòng
-                const createBtn = document.getElementById('createChannelBtn');
-                if (createBtn) createBtn.onclick = createNewChannel;
-                
-                // Gửi tin nhắn
-                const sendBtn = document.getElementById('sendBtn');
-                const msgInput = document.getElementById('messageInput');
-                if (sendBtn) sendBtn.onclick = sendMessage;
-                if (msgInput) msgInput.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
-                
-                // Xóa tin nhắn
-                document.querySelectorAll('.delete-msg').forEach(btn => {
-                    btn.onclick = (e) => {
-                        e.stopPropagation();
-                        deleteMessage(btn.dataset.msgId);
-                    };
-                });
-                
-                // Auto scroll
-                const container = document.getElementById('messagesContainer');
-                if (container) container.scrollTop = container.scrollHeight;
-            }
+
+        // 6. Tạo Server mới & Mời bạn bè
+        function createNewServer() {
+            Swal.fire({
+                title: 'Tạo hành tinh 8E mới',
+                input: 'text',
+                inputPlaceholder: 'Nhập tên Server...',
+                showCancelButton: true,
+                confirmButtonText: 'Khởi tạo',
+                background: '#1e293b',
+                color: '#fff',
+                inputAttributes: {
+                    style: 'background: #334155; color: #fff; border: 1px solid #475569; border-radius: 8px;'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const serverList = document.getElementById('server-list');
+                    const firstChar = result.value.charAt(0).toUpperCase();
+                    const newServer = `
+                        <div class="w-14 h-14 glass-panel rounded-full flex items-center justify-center cursor-pointer hover:rounded-2xl transition-all duration-300 hover:bg-rose-600 group relative">
+                            <span class="font-bold text-sm">${firstChar}</span>
+                            <span class="absolute left-20 bg-white text-black px-2 py-1 rounded text-xs font-bold opacity-0 group-hover:opacity-100 transition-all">${result.value}</span>
+                        </div>
+                    `;
+                    serverList.insertAdjacentHTML('beforeend', newServer);
+                }
+            });
         }
-        
-        // Khởi động
-        loadData();
-        initDefaultData();
-        renderApp();
+
+        function inviteFriend() {
+            const link = "https://8e-universe.io/invite/" + Math.random().toString(36).substring(7);
+            Swal.fire({
+                title: 'Mời bạn bè vào lớp 8E',
+                html: `<p class="mb-4 text-slate-400 text-sm">Gửi link này cho bạn cùng lớp để họ tham gia Universe:</p>
+                       <div class="p-3 bg-slate-800 rounded-lg font-mono text-indigo-400 select-all">${link}</div>`,
+                icon: 'info',
+                background: '#1e293b',
+                color: '#fff',
+                confirmButtonText: 'Sao chép link'
+            });
+        }
+
+        // Event listener cho phím Enter khi chat
+        document.getElementById('msg-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+
     </script>
 </body>
 </html>
