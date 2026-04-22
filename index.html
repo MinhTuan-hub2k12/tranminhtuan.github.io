@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>8E Social - Mạng xã hội lớp 8E</title>
+    <title>8E Social - Discord + Facebook</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -13,74 +13,92 @@
         }
         
         body {
-            background: #f0f2f5;
+            background: #1e1f22;
         }
         
-        /* Facebook style scrollbar */
+        /* Discord style scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
         }
         
         ::-webkit-scrollbar-track {
-            background: #f0f2f5;
+            background: #1e1f22;
         }
         
         ::-webkit-scrollbar-thumb {
-            background: #bcc0c4;
+            background: #1a1b1e;
             border-radius: 10px;
         }
         
         ::-webkit-scrollbar-thumb:hover {
-            background: #8a8e92;
+            background: #2b2d31;
         }
         
-        /* Story ring */
-        .story-ring {
-            background: linear-gradient(45deg, #f09433, #d62976, #962fbf);
+        /* Server icon */
+        .server-icon {
+            transition: all 0.2s ease;
+            border-radius: 50%;
         }
         
-        .post-card {
+        .server-icon:hover {
+            border-radius: 16px;
+            background: #5865F2;
+        }
+        
+        .server-icon.active {
+            border-radius: 16px;
+            background: #5865F2;
+        }
+        
+        /* Channel item */
+        .channel-item {
+            transition: all 0.1s ease;
+        }
+        
+        .channel-item:hover {
+            background: #2b2d31;
+        }
+        
+        .channel-active {
+            background: #2b2d31;
+        }
+        
+        /* Message */
+        .message:hover {
+            background: #2b2d31;
+        }
+        
+        /* Friend card */
+        .friend-card {
             transition: all 0.2s ease;
         }
         
-        .post-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-        }
-        
-        .friend-request-card {
-            transition: all 0.2s ease;
-        }
-        
-        .friend-request-card:hover {
-            background: #f0f2f5;
+        .friend-card:hover {
+            background: #2b2d31;
             transform: translateX(4px);
         }
         
-        /* Modal animation */
-        @keyframes modalFadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
+        /* Modal */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
         }
         
         .modal-animation {
-            animation: modalFadeIn 0.2s ease-out;
+            animation: fadeIn 0.2s ease-out;
         }
         
-        /* Server card */
-        .server-card {
-            transition: all 0.2s ease;
-        }
-        
-        .server-card:hover {
-            background: #e4e6e9;
-            transform: translateY(-2px);
+        /* Mention highlight */
+        .mention {
+            background: #5865F2;
+            color: white;
+            border-radius: 4px;
+            padding: 0 2px;
         }
     </style>
 </head>
@@ -93,10 +111,12 @@
         let users = [];
         let servers = [];
         let posts = [];
-        let messages = [];
         let friendRequests = [];
+        let currentServer = null;
+        let currentChannel = null;
+        let currentView = 'welcome'; // welcome, login, register, feed, server, friends
         
-        // Load/Save functions
+        // Load/Save
         function loadData() {
             const savedUser = localStorage.getItem('8e_currentUser');
             if (savedUser && savedUser !== 'null') {
@@ -107,20 +127,10 @@
                 currentUser = null;
             }
             
-            const savedUsers = localStorage.getItem('8e_users');
-            users = savedUsers ? JSON.parse(savedUsers) : [];
-            
-            const savedServers = localStorage.getItem('8e_servers');
-            servers = savedServers ? JSON.parse(savedServers) : [];
-            
-            const savedPosts = localStorage.getItem('8e_posts');
-            posts = savedPosts ? JSON.parse(savedPosts) : [];
-            
-            const savedMessages = localStorage.getItem('8e_messages');
-            messages = savedMessages ? JSON.parse(savedMessages) : [];
-            
-            const savedRequests = localStorage.getItem('8e_friendRequests');
-            friendRequests = savedRequests ? JSON.parse(savedRequests) : [];
+            users = JSON.parse(localStorage.getItem('8e_users') || '[]');
+            servers = JSON.parse(localStorage.getItem('8e_servers') || '[]');
+            posts = JSON.parse(localStorage.getItem('8e_posts') || '[]');
+            friendRequests = JSON.parse(localStorage.getItem('8e_friendRequests') || '[]');
         }
         
         function saveData() {
@@ -128,19 +138,17 @@
             localStorage.setItem('8e_users', JSON.stringify(users));
             localStorage.setItem('8e_servers', JSON.stringify(servers));
             localStorage.setItem('8e_posts', JSON.stringify(posts));
-            localStorage.setItem('8e_messages', JSON.stringify(messages));
             localStorage.setItem('8e_friendRequests', JSON.stringify(friendRequests));
         }
         
-        // Helper functions
+        // Helper
         function formatTime(timestamp) {
             const date = new Date(timestamp);
             const now = new Date();
             const diff = now - date;
-            if (diff < 60000) return 'Vừa xong';
+            if (diff < 60000) return 'vừa xong';
             if (diff < 3600000) return `${Math.floor(diff / 60000)} phút trước`;
             if (diff < 86400000) return `${Math.floor(diff / 3600000)} giờ trước`;
-            if (diff < 604800000) return `${Math.floor(diff / 86400000)} ngày trước`;
             return date.toLocaleDateString('vi-VN');
         }
         
@@ -160,6 +168,12 @@
         
         function hasReceivedRequest(fromUserId) {
             return friendRequests.some(r => r.fromUserId === fromUserId && r.toUserId === currentUser?.id && r.status === 'pending');
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
         
         // ==================== AUTH ====================
@@ -197,7 +211,6 @@
                 password: password,
                 avatar: `https://ui-avatars.com/api/?background=5865F2&color=fff&name=${encodeURIComponent(fullName)}`,
                 bio: 'Học sinh lớp 8E 🎓',
-                background: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800',
                 friends: [],
                 servers: [],
                 createdAt: new Date().toISOString()
@@ -298,7 +311,10 @@
                 ownerId: currentUser.id,
                 members: [currentUser.id],
                 inviteCode: inviteCode,
-                channels: [{ id: 'general', name: 'chung' }],
+                channels: [
+                    { id: 'general', name: 'chung', type: 'text' },
+                    { id: 'announcements', name: 'thông-báo', type: 'text' }
+                ],
                 messages: [],
                 createdAt: new Date().toISOString()
             };
@@ -313,11 +329,14 @@
             delete currentUser.password;
             
             saveData();
-            renderApp();
             
-            // Tạo link mời
             const link = `${window.location.origin}${window.location.pathname}?invite=${inviteCode}`;
-            alert(`✅ Đã tạo server "${name}"!\n\n🔗 Link mời: ${link}\n📋 Mã mời: ${inviteCode}\n\nGửi link này cho bạn bè để họ tham gia!`);
+            alert(`✅ Đã tạo server "${name}"!\n\n🔗 Link mời: ${link}\n📋 Mã mời: ${inviteCode}`);
+            
+            currentServer = newServer;
+            currentChannel = 'general';
+            currentView = 'server';
+            renderApp();
         }
         
         function joinServerByCode() {
@@ -346,7 +365,59 @@
             
             saveData();
             alert(`✅ Đã tham gia server "${server.name}"!`);
+            
+            currentServer = server;
+            currentChannel = 'general';
+            currentView = 'server';
             renderApp();
+        }
+        
+        // ==================== CHAT IN SERVER ====================
+        function sendServerMessage() {
+            const input = document.getElementById('serverMessageInput');
+            if (!input) return;
+            const content = input.value.trim();
+            if (!content) return;
+            
+            const server = servers.find(s => s.id === currentServer.id);
+            if (!server) return;
+            
+            // Handle mentions
+            let processedContent = content;
+            const mentionMatches = content.match(/@(\w+)/g);
+            if (mentionMatches) {
+                mentionMatches.forEach(mention => {
+                    const username = mention.substring(1);
+                    const user = users.find(u => u.username === username);
+                    if (user && server.members.includes(user.id)) {
+                        processedContent = processedContent.replace(mention, `<span class="mention">@${username}</span>`);
+                    }
+                });
+            }
+            
+            const newMessage = {
+                id: Date.now().toString(),
+                userId: currentUser.id,
+                userName: currentUser.fullName,
+                userAvatar: currentUser.avatar,
+                content: processedContent,
+                rawContent: content,
+                channelId: currentChannel,
+                timestamp: new Date().toISOString(),
+                mentions: mentionMatches || []
+            };
+            
+            if (!server.messages) server.messages = [];
+            server.messages.push(newMessage);
+            saveData();
+            
+            input.value = '';
+            renderApp();
+            
+            setTimeout(() => {
+                const container = document.getElementById('serverMessages');
+                if (container) container.scrollTop = container.scrollHeight;
+            }, 100);
         }
         
         // ==================== POST ACTIONS ====================
@@ -421,10 +492,15 @@
             renderApp();
         }
         
+        // ==================== TÌM KIẾM BẠN BÈ ====================
+        let searchQuery = '';
+        
+        function searchFriends() {
+            searchQuery = document.getElementById('searchInput')?.value.toLowerCase() || '';
+            renderApp();
+        }
+        
         // ==================== GIAO DIỆN ====================
-        let currentView = 'welcome';
-        let selectedServer = null;
-        let selectedChatUser = null;
         
         // Màn hình chào mừng
         function WelcomeScreen() {
@@ -443,7 +519,7 @@
             `;
         }
         
-        // Đăng nhập
+        // Đăng nhập/Đăng ký (giữ nguyên)
         function LoginScreen() {
             return `
                 <div class="min-h-screen bg-gradient-to-br from-[#5865F2] to-[#4752C4] flex items-center justify-center p-4">
@@ -453,7 +529,7 @@
                             <p class="text-gray-500 text-sm mt-1">Chào mừng bạn trở lại!</p>
                         </div>
                         <form id="loginForm">
-                            <input type="text" id="loginUsername" placeholder="Tên đăng nhập" class="w-full p-3 border rounded-xl mb-3 focus:outline-none focus:ring-2 focus:ring-[#5865F2]" autocomplete="off">
+                            <input type="text" id="loginUsername" placeholder="Tên đăng nhập" class="w-full p-3 border rounded-xl mb-3 focus:outline-none focus:ring-2 focus:ring-[#5865F2]">
                             <input type="password" id="loginPassword" placeholder="Mật khẩu" class="w-full p-3 border rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-[#5865F2]">
                             <button type="submit" class="w-full bg-[#5865F2] text-white py-3 rounded-xl font-semibold hover:bg-[#4752C4] transition">Đăng nhập</button>
                         </form>
@@ -466,7 +542,6 @@
             `;
         }
         
-        // Đăng ký
         function RegisterScreen() {
             return `
                 <div class="min-h-screen bg-gradient-to-br from-[#5865F2] to-[#4752C4] flex items-center justify-center p-4">
@@ -477,7 +552,7 @@
                         </div>
                         <form id="registerForm">
                             <input type="text" id="regFullName" placeholder="Họ và tên" class="w-full p-3 border rounded-xl mb-3 focus:outline-none focus:ring-2 focus:ring-[#5865F2]">
-                            <input type="text" id="regUsername" placeholder="Tên đăng nhập" class="w-full p-3 border rounded-xl mb-3 focus:outline-none focus:ring-2 focus:ring-[#5865F2]" autocomplete="off">
+                            <input type="text" id="regUsername" placeholder="Tên đăng nhập" class="w-full p-3 border rounded-xl mb-3 focus:outline-none focus:ring-2 focus:ring-[#5865F2]">
                             <input type="password" id="regPassword" placeholder="Mật khẩu" class="w-full p-3 border rounded-xl mb-3 focus:outline-none focus:ring-2 focus:ring-[#5865F2]">
                             <input type="password" id="regConfirmPassword" placeholder="Xác nhận mật khẩu" class="w-full p-3 border rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-[#5865F2]">
                             <button type="submit" class="w-full bg-[#5865F2] text-white py-3 rounded-xl font-semibold hover:bg-[#4752C4] transition">Đăng ký</button>
@@ -491,54 +566,243 @@
             `;
         }
         
-        // Main Feed (Facebook style)
-        function FeedView() {
+        // Màn hình tìm bạn bè
+        function FriendsView() {
+            const allUsers = users.filter(u => u.id !== currentUser.id);
+            const filteredUsers = searchQuery ? allUsers.filter(u => 
+                u.fullName.toLowerCase().includes(searchQuery) || 
+                u.username.toLowerCase().includes(searchQuery)
+            ) : allUsers;
+            
             const friendList = users.filter(u => currentUser.friends?.includes(u.id));
             const pendingRequests = friendRequests.filter(r => r.toUserId === currentUser.id && r.status === 'pending');
-            const myServers = servers.filter(s => s.members.includes(currentUser.id));
             
             return `
-                <div class="min-h-screen bg-gray-100">
-                    <!-- Header Facebook style -->
-                    <div class="bg-white shadow-sm sticky top-0 z-10">
-                        <div class="max-w-6xl mx-auto px-4 py-2 flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <div class="text-2xl font-bold bg-gradient-to-r from-[#5865F2] to-[#EB459E] bg-clip-text text-transparent">8E Social</div>
+                <div class="min-h-screen bg-[#1e1f22]">
+                    <!-- Header -->
+                    <div class="bg-[#2b2d31] shadow-sm sticky top-0 z-10">
+                        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <button id="backToFeed" class="text-gray-400 hover:text-white"><i class="fas fa-arrow-left text-xl"></i></button>
+                                <div class="text-xl font-bold bg-gradient-to-r from-[#5865F2] to-[#EB459E] bg-clip-text text-transparent">8E Social</div>
                             </div>
                             <div class="flex items-center gap-3">
-                                <button id="createServerBtn" class="p-2 hover:bg-gray-100 rounded-full" title="Tạo server"><i class="fas fa-plus-circle text-[#5865F2] text-xl"></i></button>
-                                <button id="joinServerBtn" class="p-2 hover:bg-gray-100 rounded-full" title="Tham gia server"><i class="fas fa-sign-in-alt text-green-500 text-xl"></i></button>
-                                <button id="profileBtn" class="flex items-center gap-2 p-1 hover:bg-gray-100 rounded-full">
+                                <button id="feedNavBtn" class="text-gray-400 hover:text-white"><i class="fas fa-newspaper text-xl"></i></button>
+                                <button id="serversNavBtn" class="text-gray-400 hover:text-white"><i class="fas fa-server text-xl"></i></button>
+                                <button id="profileNavBtn" class="flex items-center gap-2">
                                     <img src="${currentUser.avatar}" class="w-8 h-8 rounded-full object-cover">
-                                    <span class="hidden md:inline text-sm font-medium">${currentUser.fullName}</span>
                                 </button>
-                                <button id="logoutBtn" class="p-2 hover:bg-gray-100 rounded-full" title="Đăng xuất"><i class="fas fa-sign-out-alt text-gray-600 text-xl"></i></button>
+                                <button id="logoutBtn" class="text-gray-400 hover:text-white"><i class="fas fa-sign-out-alt text-xl"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="max-w-4xl mx-auto p-6">
+                        <!-- Search bar -->
+                        <div class="bg-[#2b2d31] rounded-xl p-4 mb-6">
+                            <div class="flex gap-3">
+                                <input type="text" id="searchInput" placeholder="🔍 Tìm bạn bè theo tên..." class="flex-1 bg-[#1e1f22] text-white p-3 rounded-lg outline-none focus:ring-2 focus:ring-[#5865F2]" value="${searchQuery}">
+                                <button id="searchBtn" class="bg-[#5865F2] text-white px-6 rounded-lg hover:bg-[#4752C4]">Tìm</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Friend requests -->
+                        ${pendingRequests.length > 0 ? `
+                            <div class="bg-[#2b2d31] rounded-xl p-4 mb-6">
+                                <h3 class="text-white font-semibold mb-3">📨 Lời mời kết bạn</h3>
+                                ${pendingRequests.map(req => {
+                                    const fromUser = getUserById(req.fromUserId);
+                                    return `
+                                        <div class="friend-card flex items-center justify-between p-3 rounded-lg">
+                                            <div class="flex items-center gap-3">
+                                                <img src="${fromUser.avatar}" class="w-12 h-12 rounded-full object-cover">
+                                                <div>
+                                                    <p class="text-white font-medium">${fromUser.fullName}</p>
+                                                    <p class="text-gray-400 text-sm">@${fromUser.username}</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <button class="accept-friend px-4 py-1 bg-[#5865F2] text-white rounded-full text-sm" data-request-id="${req.id}" data-user-id="${req.fromUserId}">Đồng ý</button>
+                                                <button class="reject-friend px-4 py-1 bg-gray-600 text-white rounded-full text-sm" data-request-id="${req.id}">Từ chối</button>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        ` : ''}
+                        
+                        <!-- Kết quả tìm kiếm -->
+                        <div class="bg-[#2b2d31] rounded-xl p-4">
+                            <h3 class="text-white font-semibold mb-3">👥 Kết quả tìm kiếm (${filteredUsers.length})</h3>
+                            ${filteredUsers.length === 0 ? `
+                                <p class="text-gray-400 text-center py-8">Không tìm thấy người dùng nào</p>
+                            ` : `
+                                <div class="space-y-2">
+                                    ${filteredUsers.map(user => {
+                                        const isFriend = isFriend(user.id);
+                                        const sentRequest = hasSentRequest(user.id);
+                                        const receivedRequest = hasReceivedRequest(user.id);
+                                        return `
+                                            <div class="friend-card flex items-center justify-between p-3 rounded-lg">
+                                                <div class="flex items-center gap-3">
+                                                    <img src="${user.avatar}" class="w-12 h-12 rounded-full object-cover">
+                                                    <div>
+                                                        <p class="text-white font-medium">${user.fullName}</p>
+                                                        <p class="text-gray-400 text-sm">@${user.username}</p>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    ${isFriend ? 
+                                                        `<span class="text-green-400 text-sm"><i class="fas fa-check-circle"></i> Bạn bè</span>`
+                                                        : sentRequest ?
+                                                        `<span class="text-gray-400 text-sm">Đã gửi lời mời</span>`
+                                                        : receivedRequest ?
+                                                        `<div class="flex gap-2">
+                                                            <button class="accept-friend px-3 py-1 bg-[#5865F2] text-white rounded-full text-sm" data-request-id="${receivedRequest}" data-user-id="${user.id}">Đồng ý</button>
+                                                            <button class="reject-friend px-3 py-1 bg-gray-600 text-white rounded-full text-sm" data-request-id="${receivedRequest}">Từ chối</button>
+                                                        </div>`
+                                                        :
+                                                        `<button class="add-friend-btn px-4 py-1 bg-[#5865F2] text-white rounded-full text-sm" data-user-id="${user.id}">
+                                                            <i class="fas fa-user-plus"></i> Kết bạn
+                                                        </button>`
+                                                    }
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Giao diện server giống Discord
+        function ServerView() {
+            const server = servers.find(s => s.id === currentServer?.id);
+            if (!server) {
+                currentView = 'feed';
+                renderApp();
+                return '';
+            }
+            
+            const channelMessages = server.messages?.filter(m => m.channelId === currentChannel) || [];
+            const currentChannelInfo = server.channels.find(c => c.id === currentChannel);
+            const isOwner = server.ownerId === currentUser.id;
+            
+            return `
+                <div class="flex h-screen">
+                    <!-- Server sidebar -->
+                    <div class="w-60 bg-[#1e1f22] flex flex-col">
+                        <div class="h-12 flex items-center px-4 shadow-md border-b border-[#2b2d31]">
+                            <h2 class="text-white font-semibold">${server.name}</h2>
+                        </div>
+                        <div class="flex-1 overflow-y-auto p-2">
+                            <div class="text-xs uppercase text-gray-400 font-semibold mb-2 px-2">Kênh văn bản</div>
+                            ${server.channels.map(ch => `
+                                <div class="channel-item ${currentChannel === ch.id ? 'channel-active' : ''} p-2 rounded cursor-pointer flex items-center gap-2" data-channel="${ch.id}">
+                                    <span class="text-gray-400">#</span>
+                                    <span class="text-gray-300 text-sm">${ch.name}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="p-3 border-t border-[#2b2d31]">
+                            <div class="flex items-center gap-2 text-sm">
+                                <img src="${currentUser.avatar}" class="w-8 h-8 rounded-full">
+                                <div class="flex-1">
+                                    <p class="text-white text-sm">${currentUser.fullName}</p>
+                                    <p class="text-gray-400 text-xs">#${currentUser.username}</p>
+                                </div>
+                                <button id="leaveServerBtn" class="text-gray-400 hover:text-red-400"><i class="fas fa-sign-out-alt"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Chat area -->
+                    <div class="flex-1 flex flex-col bg-[#2b2d31]">
+                        <div class="h-12 flex items-center px-4 shadow-sm border-b border-[#1e1f22]">
+                            <span class="text-gray-400">#</span>
+                            <span class="text-white font-semibold ml-2">${currentChannelInfo?.name || currentChannel}</span>
+                        </div>
+                        
+                        <div id="serverMessages" class="flex-1 overflow-y-auto p-4 space-y-2">
+                            ${channelMessages.length === 0 ? `
+                                <div class="text-center text-gray-400 py-20">
+                                    <div class="text-6xl mb-4">💬</div>
+                                    <p>Chưa có tin nhắn nào</p>
+                                    <p class="text-sm">Hãy là người đầu tiên nhắn tin!</p>
+                                </div>
+                            ` : channelMessages.map(msg => `
+                                <div class="message flex gap-3 p-2 rounded group">
+                                    <img src="${msg.userAvatar}" class="w-10 h-10 rounded-full">
+                                    <div class="flex-1">
+                                        <div class="flex items-baseline gap-2">
+                                            <span class="text-white font-semibold">${msg.userName}</span>
+                                            <span class="text-gray-400 text-xs">${formatTime(msg.timestamp)}</span>
+                                        </div>
+                                        <div class="text-gray-200 break-words">${msg.content}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div class="p-4">
+                            <div class="bg-[#1e1f22] rounded-lg flex items-center">
+                                <input type="text" id="serverMessageInput" class="flex-1 bg-transparent text-white p-3 outline-none" placeholder="Nhập tin nhắn... (có thể @tên để mention)" autocomplete="off">
+                                <button id="sendServerMsgBtn" class="bg-[#5865F2] text-white px-4 py-2 m-1 rounded transition">Gửi</button>
+                            </div>
+                            <p class="text-gray-500 text-xs mt-2">💡 Gợi ý: @tên_người_dùng để mention</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Feed view (giữ nguyên)
+        function FeedView() {
+            const friendList = users.filter(u => currentUser.friends?.includes(u.id));
+            const myServers = servers.filter(s => s.members.includes(currentUser.id));
+            const pendingRequests = friendRequests.filter(r => r.toUserId === currentUser.id && r.status === 'pending');
+            
+            return `
+                <div class="min-h-screen bg-[#1e1f22]">
+                    <div class="bg-[#2b2d31] shadow-sm sticky top-0 z-10">
+                        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="text-xl font-bold bg-gradient-to-r from-[#5865F2] to-[#EB459E] bg-clip-text text-transparent">8E Social</div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button id="friendsNavBtn" class="text-gray-400 hover:text-white"><i class="fas fa-user-friends text-xl"></i></button>
+                                <button id="serversNavBtn" class="text-gray-400 hover:text-white"><i class="fas fa-server text-xl"></i></button>
+                                <button id="profileNavBtn" class="flex items-center gap-2">
+                                    <img src="${currentUser.avatar}" class="w-8 h-8 rounded-full object-cover">
+                                </button>
+                                <button id="logoutBtn" class="text-gray-400 hover:text-white"><i class="fas fa-sign-out-alt text-xl"></i></button>
                             </div>
                         </div>
                     </div>
                     
                     <div class="max-w-6xl mx-auto px-4 py-6">
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            <!-- Left sidebar - Friends & Servers -->
+                            <!-- Left sidebar -->
                             <div class="lg:col-span-1 space-y-4">
-                                <!-- Friend requests -->
                                 ${pendingRequests.length > 0 ? `
-                                    <div class="bg-white rounded-xl p-4 shadow">
-                                        <h3 class="font-semibold text-gray-700 mb-3">Lời mời kết bạn</h3>
+                                    <div class="bg-[#2b2d31] rounded-xl p-4">
+                                        <h3 class="text-white font-semibold mb-3">📨 Lời mời kết bạn</h3>
                                         ${pendingRequests.map(req => {
                                             const fromUser = getUserById(req.fromUserId);
                                             return `
-                                                <div class="friend-request-card flex items-center justify-between p-2 rounded-lg">
+                                                <div class="flex items-center justify-between p-2 rounded-lg">
                                                     <div class="flex items-center gap-3">
-                                                        <img src="${fromUser.avatar}" class="w-10 h-10 rounded-full object-cover">
+                                                        <img src="${fromUser.avatar}" class="w-10 h-10 rounded-full">
                                                         <div>
-                                                            <p class="font-medium">${fromUser.fullName}</p>
-                                                            <p class="text-xs text-gray-500">@${fromUser.username}</p>
+                                                            <p class="text-white text-sm">${fromUser.fullName}</p>
                                                         </div>
                                                     </div>
                                                     <div class="flex gap-2">
-                                                        <button class="accept-friend p-1 px-3 bg-[#5865F2] text-white rounded-full text-sm" data-request-id="${req.id}" data-user-id="${req.fromUserId}">Đồng ý</button>
-                                                        <button class="reject-friend p-1 px-3 bg-gray-300 rounded-full text-sm" data-request-id="${req.id}">Từ chối</button>
+                                                        <button class="accept-friend px-3 py-1 bg-[#5865F2] text-white rounded-full text-xs" data-request-id="${req.id}" data-user-id="${req.fromUserId}">Đồng ý</button>
+                                                        <button class="reject-friend px-3 py-1 bg-gray-600 text-white rounded-full text-xs" data-request-id="${req.id}">Từ chối</button>
                                                     </div>
                                                 </div>
                                             `;
@@ -546,49 +810,43 @@
                                     </div>
                                 ` : ''}
                                 
-                                <!-- Servers -->
-                                <div class="bg-white rounded-xl p-4 shadow">
+                                <div class="bg-[#2b2d31] rounded-xl p-4">
                                     <div class="flex justify-between items-center mb-3">
-                                        <h3 class="font-semibold text-gray-700">Server của bạn</h3>
-                                        <button id="createServerBtn2" class="text-[#5865F2] text-sm">+ Tạo mới</button>
+                                        <h3 class="text-white font-semibold">🖥️ Server của bạn</h3>
+                                        <button id="createServerBtn" class="text-[#5865F2] text-sm">+ Tạo mới</button>
                                     </div>
                                     ${myServers.length === 0 ? `
-                                        <p class="text-gray-400 text-sm text-center py-4">Chưa có server nào<br>Tạo server để trò chuyện với bạn bè</p>
+                                        <p class="text-gray-400 text-sm text-center py-4">Chưa có server nào<br>Tạo server để trò chuyện</p>
                                     ` : `
                                         <div class="space-y-2">
                                             ${myServers.map(s => `
-                                                <div class="server-card flex items-center gap-3 p-2 rounded-lg cursor-pointer" data-server-id="${s.id}">
+                                                <div class="server-card flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-[#1e1f22]" data-server-id="${s.id}">
                                                     <div class="w-10 h-10 bg-gradient-to-r from-[#5865F2] to-[#EB459E] rounded-full flex items-center justify-center text-white font-bold">${s.name.charAt(0)}</div>
                                                     <div class="flex-1">
-                                                        <p class="font-medium">${s.name}</p>
-                                                        <p class="text-xs text-gray-500">${s.members.length} thành viên</p>
+                                                        <p class="text-white text-sm">${s.name}</p>
+                                                        <p class="text-gray-400 text-xs">${s.members.length} thành viên</p>
                                                     </div>
-                                                    <i class="fas fa-chevron-right text-gray-400"></i>
+                                                    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
                                                 </div>
                                             `).join('')}
                                         </div>
                                     `}
                                 </div>
                                 
-                                <!-- Friends -->
-                                <div class="bg-white rounded-xl p-4 shadow">
-                                    <h3 class="font-semibold text-gray-700 mb-3">Bạn bè (${friendList.length})</h3>
+                                <div class="bg-[#2b2d31] rounded-xl p-4">
+                                    <h3 class="text-white font-semibold mb-3">👥 Bạn bè (${friendList.length})</h3>
                                     ${friendList.length === 0 ? `
-                                        <p class="text-gray-400 text-sm text-center py-4">Chưa có bạn bè<br>Hãy kết bạn để bắt đầu trò chuyện</p>
+                                        <p class="text-gray-400 text-sm text-center py-4">Chưa có bạn bè<br>Hãy kết bạn để bắt đầu</p>
                                     ` : `
                                         <div class="space-y-2 max-h-80 overflow-y-auto">
                                             ${friendList.map(friend => `
-                                                <div class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50">
+                                                <div class="flex items-center justify-between p-2 rounded-lg hover:bg-[#1e1f22]">
                                                     <div class="flex items-center gap-3">
-                                                        <img src="${friend.avatar}" class="w-10 h-10 rounded-full object-cover">
+                                                        <img src="${friend.avatar}" class="w-10 h-10 rounded-full">
                                                         <div>
-                                                            <p class="font-medium">${friend.fullName}</p>
-                                                            <p class="text-xs text-gray-500">@${friend.username}</p>
+                                                            <p class="text-white text-sm">${friend.fullName}</p>
                                                         </div>
                                                     </div>
-                                                    <button class="chat-user p-2 text-[#5865F2] hover:bg-gray-100 rounded-full" data-user-id="${friend.id}" data-user-name="${friend.fullName}" data-user-avatar="${friend.avatar}">
-                                                        <i class="fas fa-comment"></i>
-                                                    </button>
                                                 </div>
                                             `).join('')}
                                         </div>
@@ -596,60 +854,57 @@
                                 </div>
                             </div>
                             
-                            <!-- Main feed -->
+                            <!-- Feed -->
                             <div class="lg:col-span-2 space-y-4">
-                                <!-- Create post -->
-                                <div class="bg-white rounded-xl p-4 shadow">
+                                <div class="bg-[#2b2d31] rounded-xl p-4">
                                     <div class="flex gap-3">
-                                        <img src="${currentUser.avatar}" class="w-10 h-10 rounded-full object-cover">
-                                        <input type="text" id="postContent" placeholder="Bạn đang nghĩ gì?" class="flex-1 p-3 bg-gray-100 rounded-full outline-none focus:ring-2 focus:ring-[#5865F2]">
+                                        <img src="${currentUser.avatar}" class="w-10 h-10 rounded-full">
+                                        <input type="text" id="postContent" placeholder="Bạn đang nghĩ gì?" class="flex-1 p-3 bg-[#1e1f22] text-white rounded-full outline-none focus:ring-2 focus:ring-[#5865F2]">
                                     </div>
                                     <div class="flex justify-end mt-3">
                                         <button id="submitPostBtn" class="px-6 py-2 bg-[#5865F2] text-white rounded-full font-semibold hover:bg-[#4752C4]">Đăng</button>
                                     </div>
                                 </div>
                                 
-                                <!-- Posts feed -->
                                 ${posts.length === 0 ? `
-                                    <div class="bg-white rounded-xl p-8 text-center shadow">
+                                    <div class="bg-[#2b2d31] rounded-xl p-8 text-center">
                                         <div class="text-6xl mb-4">📝</div>
-                                        <p class="text-gray-500">Chưa có bài viết nào</p>
-                                        <p class="text-sm text-gray-400">Hãy đăng bài viết đầu tiên của bạn!</p>
+                                        <p class="text-gray-400">Chưa có bài viết nào</p>
                                     </div>
                                 ` : posts.map(post => {
                                     const isLiked = post.likes.includes(currentUser.id);
                                     return `
-                                        <div class="bg-white rounded-xl shadow overflow-hidden">
+                                        <div class="bg-[#2b2d31] rounded-xl overflow-hidden">
                                             <div class="p-4">
                                                 <div class="flex items-center gap-3 mb-3">
-                                                    <img src="${post.userAvatar}" class="w-10 h-10 rounded-full object-cover">
+                                                    <img src="${post.userAvatar}" class="w-10 h-10 rounded-full">
                                                     <div>
-                                                        <p class="font-semibold">${post.userName}</p>
-                                                        <p class="text-xs text-gray-500">${formatTime(post.createdAt)}</p>
+                                                        <p class="text-white font-semibold">${post.userName}</p>
+                                                        <p class="text-gray-400 text-xs">${formatTime(post.createdAt)}</p>
                                                     </div>
                                                 </div>
-                                                <p class="text-gray-700 mb-3">${escapeHtml(post.content)}</p>
-                                                <div class="flex gap-4 border-t pt-3">
-                                                    <button class="like-post flex items-center gap-2 text-sm ${isLiked ? 'text-[#5865F2]' : 'text-gray-500'}" data-post-id="${post.id}">
+                                                <p class="text-gray-200 mb-3">${escapeHtml(post.content)}</p>
+                                                <div class="flex gap-4 border-t border-[#1e1f22] pt-3">
+                                                    <button class="like-post flex items-center gap-2 text-sm ${isLiked ? 'text-[#5865F2]' : 'text-gray-400'}" data-post-id="${post.id}">
                                                         <i class="fas fa-heart"></i> ${post.likes.length} Thích
                                                     </button>
-                                                    <button class="comment-toggle flex items-center gap-2 text-sm text-gray-500" data-post-id="${post.id}">
+                                                    <button class="comment-toggle flex items-center gap-2 text-sm text-gray-400" data-post-id="${post.id}">
                                                         <i class="fas fa-comment"></i> ${post.comments.length} Bình luận
                                                     </button>
                                                 </div>
-                                                <div class="comments-section hidden mt-3 pt-3 border-t" id="comments-${post.id}">
+                                                <div class="comments-section hidden mt-3 pt-3 border-t border-[#1e1f22]" id="comments-${post.id}">
                                                     ${post.comments.map(comment => `
                                                         <div class="flex gap-2 mb-2">
-                                                            <img src="${comment.userAvatar}" class="w-6 h-6 rounded-full object-cover">
-                                                            <div class="flex-1 bg-gray-100 rounded-lg p-2">
-                                                                <p class="text-xs font-semibold">${comment.userName}</p>
-                                                                <p class="text-sm">${escapeHtml(comment.content)}</p>
+                                                            <img src="${comment.userAvatar}" class="w-6 h-6 rounded-full">
+                                                            <div class="flex-1 bg-[#1e1f22] rounded-lg p-2">
+                                                                <p class="text-xs text-white font-semibold">${comment.userName}</p>
+                                                                <p class="text-sm text-gray-300">${escapeHtml(comment.content)}</p>
                                                             </div>
                                                         </div>
                                                     `).join('')}
                                                     <div class="flex gap-2 mt-2">
-                                                        <img src="${currentUser.avatar}" class="w-6 h-6 rounded-full object-cover">
-                                                        <input type="text" class="comment-input flex-1 p-2 bg-gray-100 rounded-full text-sm outline-none" placeholder="Viết bình luận..." data-post-id="${post.id}">
+                                                        <img src="${currentUser.avatar}" class="w-6 h-6 rounded-full">
+                                                        <input type="text" class="comment-input flex-1 p-2 bg-[#1e1f22] text-white rounded-full text-sm outline-none" placeholder="Viết bình luận..." data-post-id="${post.id}">
                                                     </div>
                                                 </div>
                                             </div>
@@ -660,91 +915,64 @@
                         </div>
                     </div>
                 </div>
-                
-                <!-- Chat modal -->
-                <div id="chatModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
-                    <div class="bg-white rounded-xl w-full max-w-md h-96 flex flex-col modal-animation">
-                        <div class="p-3 border-b flex justify-between items-center">
-                            <div class="flex items-center gap-2">
-                                <img id="chatAvatar" src="" class="w-8 h-8 rounded-full object-cover">
-                                <span id="chatName" class="font-semibold"></span>
-                            </div>
-                            <button id="closeChatModal" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
-                        </div>
-                        <div id="chatMessages" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
-                        <div class="p-3 border-t flex gap-2">
-                            <input type="text" id="chatInput" placeholder="Nhập tin nhắn..." class="flex-1 p-2 border rounded-full outline-none focus:ring-2 focus:ring-[#5865F2]">
-                            <button id="sendChatBtn" class="bg-[#5865F2] text-white px-4 py-2 rounded-full">Gửi</button>
-                        </div>
-                    </div>
-                </div>
             `;
         }
         
-        // Profile page
         function ProfileView() {
             return `
-                <div class="min-h-screen bg-gray-100">
-                    <div class="bg-white shadow-sm sticky top-0 z-10">
-                        <div class="max-w-4xl mx-auto px-4 py-2 flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <button id="backToFeed" class="p-2 hover:bg-gray-100 rounded-full"><i class="fas fa-arrow-left text-xl"></i></button>
+                <div class="min-h-screen bg-[#1e1f22]">
+                    <div class="bg-[#2b2d31] shadow-sm sticky top-0 z-10">
+                        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <button id="backToFeed" class="text-gray-400 hover:text-white"><i class="fas fa-arrow-left text-xl"></i></button>
                                 <div class="text-xl font-bold bg-gradient-to-r from-[#5865F2] to-[#EB459E] bg-clip-text text-transparent">8E Social</div>
                             </div>
-                            <button id="logoutBtn" class="p-2 hover:bg-gray-100 rounded-full"><i class="fas fa-sign-out-alt text-gray-600 text-xl"></i></button>
+                            <div class="flex items-center gap-3">
+                                <button id="logoutBtn" class="text-gray-400 hover:text-white"><i class="fas fa-sign-out-alt text-xl"></i></button>
+                            </div>
                         </div>
                     </div>
                     
                     <div class="max-w-4xl mx-auto">
-                        <!-- Cover photo -->
-                        <div class="relative h-64 bg-gradient-to-r from-[#5865F2] to-[#EB459E] rounded-b-2xl">
-                            <img src="${currentUser.background}" class="w-full h-full object-cover rounded-b-2xl">
+                        <div class="relative h-64 bg-gradient-to-r from-[#5865F2] to-[#EB459E]">
                             <div class="absolute -bottom-16 left-8">
-                                <img src="${currentUser.avatar}" class="w-32 h-32 rounded-full border-4 border-white object-cover">
+                                <img src="${currentUser.avatar}" class="w-32 h-32 rounded-full border-4 border-[#1e1f22] object-cover">
                             </div>
                         </div>
                         
-                        <!-- Profile info -->
-                        <div class="bg-white rounded-xl shadow mx-4 mt-20 p-6">
+                        <div class="bg-[#2b2d31] rounded-xl mx-4 mt-20 p-6">
                             <div class="flex justify-between items-start">
                                 <div>
-                                    <h1 class="text-2xl font-bold">${currentUser.fullName}</h1>
-                                    <p class="text-gray-500">@${currentUser.username}</p>
-                                    <p class="text-gray-700 mt-2">${currentUser.bio}</p>
+                                    <h1 class="text-2xl font-bold text-white">${currentUser.fullName}</h1>
+                                    <p class="text-gray-400">@${currentUser.username}</p>
+                                    <p class="text-gray-300 mt-2">${currentUser.bio}</p>
                                 </div>
-                                <button id="editProfileBtn" class="px-4 py-2 bg-gray-200 rounded-full text-sm font-semibold hover:bg-gray-300">Chỉnh sửa</button>
+                                <button id="editProfileBtn" class="px-4 py-2 bg-[#1e1f22] text-white rounded-full text-sm hover:bg-[#3b3d41]">Chỉnh sửa</button>
                             </div>
                             
-                            <div class="flex gap-6 mt-4 pt-4 border-t">
-                                <div><span class="font-bold">${currentUser.friends?.length || 0}</span> <span class="text-gray-500">bạn bè</span></div>
-                                <div><span class="font-bold">${currentUser.servers?.length || 0}</span> <span class="text-gray-500">server</span></div>
+                            <div class="flex gap-6 mt-4 pt-4 border-t border-[#1e1f22]">
+                                <div><span class="font-bold text-white">${currentUser.friends?.length || 0}</span> <span class="text-gray-400">bạn bè</span></div>
+                                <div><span class="font-bold text-white">${currentUser.servers?.length || 0}</span> <span class="text-gray-400">server</span></div>
                             </div>
                         </div>
-                        
-                        <!-- Edit profile modal -->
-                        <div id="editModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
-                            <div class="bg-white rounded-xl p-6 w-full max-w-md modal-animation">
-                                <h3 class="text-xl font-bold mb-4">Chỉnh sửa trang cá nhân</h3>
-                                <div class="space-y-3">
-                                    <input type="text" id="editFullName" placeholder="Họ và tên" class="w-full p-3 border rounded-xl" value="${currentUser.fullName}">
-                                    <textarea id="editBio" placeholder="Tiểu sử" rows="3" class="w-full p-3 border rounded-xl">${currentUser.bio}</textarea>
-                                    <input type="text" id="editAvatar" placeholder="URL ảnh đại diện" class="w-full p-3 border rounded-xl" value="${currentUser.avatar}">
-                                    <div class="flex gap-3">
-                                        <button id="saveProfileBtn" class="flex-1 bg-[#5865F2] text-white py-2 rounded-xl font-semibold">Lưu</button>
-                                        <button id="closeEditModal" class="flex-1 bg-gray-200 py-2 rounded-xl font-semibold">Hủy</button>
-                                    </div>
+                    </div>
+                    
+                    <div id="editModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+                        <div class="bg-[#2b2d31] rounded-xl p-6 w-full max-w-md modal-animation">
+                            <h3 class="text-xl font-bold text-white mb-4">Chỉnh sửa trang cá nhân</h3>
+                            <div class="space-y-3">
+                                <input type="text" id="editFullName" placeholder="Họ và tên" class="w-full p-3 bg-[#1e1f22] text-white rounded-lg" value="${currentUser.fullName}">
+                                <textarea id="editBio" placeholder="Tiểu sử" rows="3" class="w-full p-3 bg-[#1e1f22] text-white rounded-lg">${currentUser.bio}</textarea>
+                                <input type="text" id="editAvatar" placeholder="URL ảnh đại diện" class="w-full p-3 bg-[#1e1f22] text-white rounded-lg" value="${currentUser.avatar}">
+                                <div class="flex gap-3">
+                                    <button id="saveProfileBtn" class="flex-1 bg-[#5865F2] text-white py-2 rounded-lg font-semibold">Lưu</button>
+                                    <button id="closeEditModal" class="flex-1 bg-[#1e1f22] text-white py-2 rounded-lg font-semibold">Hủy</button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             `;
-        }
-        
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
         }
         
         // ==================== RENDER ====================
@@ -760,6 +988,8 @@
                 else html = WelcomeScreen();
             } else {
                 if (currentView === 'profile') html = ProfileView();
+                else if (currentView === 'server') html = ServerView();
+                else if (currentView === 'friends') html = FriendsView();
                 else html = FeedView();
             }
             
@@ -769,47 +999,80 @@
         
         function attachEvents() {
             if (!currentUser) {
-                // Welcome screen
                 const loginBtn = document.getElementById('loginBtn');
                 const registerBtn = document.getElementById('registerBtn');
                 if (loginBtn) loginBtn.onclick = () => { currentView = 'login'; renderApp(); };
                 if (registerBtn) registerBtn.onclick = () => { currentView = 'register'; renderApp(); };
                 
-                // Login screen
                 const loginForm = document.getElementById('loginForm');
                 if (loginForm) loginForm.onsubmit = handleLogin;
                 const switchToRegister = document.getElementById('switchToRegister');
                 if (switchToRegister) switchToRegister.onclick = () => { currentView = 'register'; renderApp(); };
                 
-                // Register screen
                 const registerForm = document.getElementById('registerForm');
                 if (registerForm) registerForm.onsubmit = handleRegister;
                 const switchToLogin = document.getElementById('switchToLogin');
                 if (switchToLogin) switchToLogin.onclick = () => { currentView = 'login'; renderApp(); };
             } else {
-                // Feed view
-                const createServerBtn = document.getElementById('createServerBtn');
-                const createServerBtn2 = document.getElementById('createServerBtn2');
-                const joinServerBtn = document.getElementById('joinServerBtn');
-                const profileBtn = document.getElementById('profileBtn');
+                // Navigation
+                const friendsNavBtn = document.getElementById('friendsNavBtn');
+                const serversNavBtn = document.getElementById('serversNavBtn');
+                const profileNavBtn = document.getElementById('profileNavBtn');
+                const backToFeed = document.getElementById('backToFeed');
                 const logoutBtn = document.getElementById('logoutBtn');
+                
+                if (friendsNavBtn) friendsNavBtn.onclick = () => { currentView = 'friends'; renderApp(); };
+                if (serversNavBtn) serversNavBtn.onclick = () => { currentView = 'feed'; renderApp(); };
+                if (profileNavBtn) profileNavBtn.onclick = () => { currentView = 'profile'; renderApp(); };
+                if (backToFeed) backToFeed.onclick = () => { currentView = 'feed'; renderApp(); };
+                if (logoutBtn) logoutBtn.onclick = logout;
+                
+                // Server actions
+                const createServerBtn = document.getElementById('createServerBtn');
+                if (createServerBtn) createServerBtn.onclick = createServer;
+                
+                document.querySelectorAll('.server-card').forEach(card => {
+                    card.onclick = () => {
+                        const serverId = card.dataset.serverId;
+                        currentServer = servers.find(s => s.id === serverId);
+                        currentChannel = 'general';
+                        currentView = 'server';
+                        renderApp();
+                    };
+                });
+                
+                // Server view events
+                const sendServerMsgBtn = document.getElementById('sendServerMsgBtn');
+                const serverMessageInput = document.getElementById('serverMessageInput');
+                if (sendServerMsgBtn) sendServerMsgBtn.onclick = sendServerMessage;
+                if (serverMessageInput) serverMessageInput.onkeypress = (e) => { if (e.key === 'Enter') sendServerMessage(); };
+                
+                document.querySelectorAll('.channel-item').forEach(ch => {
+                    ch.onclick = () => {
+                        currentChannel = ch.dataset.channel;
+                        renderApp();
+                    };
+                });
+                
+                const leaveServerBtn = document.getElementById('leaveServerBtn');
+                if (leaveServerBtn) leaveServerBtn.onclick = () => {
+                    if (confirm('Rời khỏi server?')) {
+                        currentView = 'feed';
+                        currentServer = null;
+                        renderApp();
+                    }
+                };
+                
+                // Feed events
                 const submitPostBtn = document.getElementById('submitPostBtn');
                 const postContent = document.getElementById('postContent');
-                
-                if (createServerBtn) createServerBtn.onclick = createServer;
-                if (createServerBtn2) createServerBtn2.onclick = createServer;
-                if (joinServerBtn) joinServerBtn.onclick = joinServerByCode;
-                if (profileBtn) profileBtn.onclick = () => { currentView = 'profile'; renderApp(); };
-                if (logoutBtn) logoutBtn.onclick = logout;
                 if (submitPostBtn && postContent) submitPostBtn.onclick = () => { createPost(postContent.value); };
                 if (postContent) postContent.onkeypress = (e) => { if (e.key === 'Enter') createPost(postContent.value); };
                 
-                // Like buttons
                 document.querySelectorAll('.like-post').forEach(btn => {
                     btn.onclick = () => likePost(btn.dataset.postId);
                 });
                 
-                // Comment toggle
                 document.querySelectorAll('.comment-toggle').forEach(btn => {
                     btn.onclick = () => {
                         const commentsDiv = document.getElementById(`comments-${btn.dataset.postId}`);
@@ -817,7 +1080,6 @@
                     };
                 });
                 
-                // Comment inputs
                 document.querySelectorAll('.comment-input').forEach(input => {
                     input.onkeypress = (e) => {
                         if (e.key === 'Enter') {
@@ -827,99 +1089,35 @@
                     };
                 });
                 
-                // Friend requests
+                // Friend actions
                 document.querySelectorAll('.accept-friend').forEach(btn => {
                     btn.onclick = () => acceptFriendRequest(btn.dataset.requestId, btn.dataset.userId);
                 });
                 document.querySelectorAll('.reject-friend').forEach(btn => {
                     btn.onclick = () => rejectFriendRequest(btn.dataset.requestId);
                 });
-                
-                // Chat
-                let currentChatUser = null;
-                const chatModal = document.getElementById('chatModal');
-                const closeChatModal = document.getElementById('closeChatModal');
-                const sendChatBtn = document.getElementById('sendChatBtn');
-                const chatInput = document.getElementById('chatInput');
-                
-                document.querySelectorAll('.chat-user').forEach(btn => {
-                    btn.onclick = () => {
-                        currentChatUser = {
-                            id: btn.dataset.userId,
-                            name: btn.dataset.userName,
-                            avatar: btn.dataset.userAvatar
-                        };
-                        document.getElementById('chatName').innerText = currentChatUser.name;
-                        document.getElementById('chatAvatar').src = currentChatUser.avatar;
-                        loadChatMessages();
-                        chatModal.classList.remove('hidden');
-                        chatModal.classList.add('flex');
-                    };
+                document.querySelectorAll('.add-friend-btn').forEach(btn => {
+                    btn.onclick = () => sendFriendRequest(btn.dataset.userId);
                 });
                 
-                function loadChatMessages() {
-                    const chatMessagesDiv = document.getElementById('chatMessages');
-                    const chatMsgs = messages.filter(m => 
-                        (m.fromUserId === currentUser.id && m.toUserId === currentChatUser.id) ||
-                        (m.fromUserId === currentChatUser.id && m.toUserId === currentUser.id)
-                    );
-                    chatMessagesDiv.innerHTML = chatMsgs.map(m => `
-                        <div class="flex ${m.fromUserId === currentUser.id ? 'justify-end' : 'justify-start'}">
-                            <div class="max-w-[70%] ${m.fromUserId === currentUser.id ? 'bg-[#5865F2] text-white' : 'bg-gray-200'} rounded-lg p-2">
-                                <p class="text-sm">${escapeHtml(m.content)}</p>
-                                <p class="text-xs opacity-70 mt-1">${formatTime(m.timestamp)}</p>
-                            </div>
-                        </div>
-                    `).join('');
-                    chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
-                }
+                // Search
+                const searchBtn = document.getElementById('searchBtn');
+                const searchInput = document.getElementById('searchInput');
+                if (searchBtn) searchBtn.onclick = searchFriends;
+                if (searchInput) searchInput.onkeypress = (e) => { if (e.key === 'Enter') searchFriends(); };
                 
-                if (sendChatBtn && chatInput) {
-                    sendChatBtn.onclick = () => {
-                        if (chatInput.value.trim() && currentChatUser) {
-                            messages.push({
-                                id: Date.now().toString(),
-                                fromUserId: currentUser.id,
-                                toUserId: currentChatUser.id,
-                                content: chatInput.value.trim(),
-                                timestamp: new Date().toISOString()
-                            });
-                            saveData();
-                            chatInput.value = '';
-                            loadChatMessages();
-                        }
-                    };
-                    chatInput.onkeypress = (e) => { if (e.key === 'Enter') sendChatBtn.click(); };
-                }
-                
-                if (closeChatModal) closeChatModal.onclick = () => {
-                    chatModal.classList.add('hidden');
-                    chatModal.classList.remove('flex');
-                };
-                if (chatModal) chatModal.onclick = (e) => { if (e.target === chatModal) chatModal.classList.add('hidden'); };
-                
-                // Server click
-                document.querySelectorAll('.server-card').forEach(card => {
-                    card.onclick = () => {
-                        alert('🚀 Tính năng chat trong server đang phát triển!\n💬 Hiện tại bạn có thể chat riêng với bạn bè.');
-                    };
-                });
-                
-                // Profile view
+                // Profile
                 const editProfileBtn = document.getElementById('editProfileBtn');
                 const editModal = document.getElementById('editModal');
                 const closeEditModal = document.getElementById('closeEditModal');
                 const saveProfileBtn = document.getElementById('saveProfileBtn');
-                const backToFeed = document.getElementById('backToFeed');
                 
                 if (editProfileBtn && editModal) editProfileBtn.onclick = () => editModal.classList.remove('hidden');
                 if (closeEditModal && editModal) closeEditModal.onclick = () => editModal.classList.add('hidden');
                 if (saveProfileBtn) saveProfileBtn.onclick = updateProfile;
-                if (backToFeed) backToFeed.onclick = () => { currentView = 'feed'; renderApp(); };
             }
         }
         
-        // Khởi động
         loadData();
         renderApp();
     </script>
