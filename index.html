@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌤️ WeatherHub - Đồng hồ + Thời tiết + Map</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>✨ DreamScape - Màn hình chờ đẹp</title>
     <style>
         /* ===== RESET ===== */
         * {
@@ -15,631 +14,650 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0a0e27;
+            height: 100vh;
+            overflow: hidden;
+            background: #0a0a0a;
             color: #fff;
-            min-height: 100vh;
-            overflow-x: hidden;
+            user-select: none;
         }
 
-        /* ===== HEADER ===== */
-        .header {
-            background: linear-gradient(135deg, rgba(10, 14, 39, 0.95), rgba(30, 20, 80, 0.9));
-            padding: 20px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            position: sticky;
+        /* ===== BACKGROUND SLIDESHOW ===== */
+        #slideshow {
+            position: fixed;
             top: 0;
-            z-index: 1000;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
         }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 24px;
-            font-weight: 900;
-            background: linear-gradient(90deg, #00d2ff, #3a7bd5, #a29bfe);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: 1px;
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+            animation: zoomIn 20s ease-in-out infinite alternate;
         }
 
-        .logo span {
-            font-size: 28px;
-            -webkit-text-fill-color: initial;
+        .slide.active {
+            opacity: 1;
         }
 
-        .search-box {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.06);
-            padding: 8px 16px;
-            border-radius: 50px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            transition: all 0.3s;
+        @keyframes zoomIn {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
         }
 
-        .search-box:focus-within {
-            border-color: rgba(0, 210, 255, 0.4);
-            box-shadow: 0 0 30px rgba(0, 210, 255, 0.1);
+        /* ===== BLUR OVERLAY ===== */
+        #blur-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            backdrop-filter: blur(20px) saturate(1.2);
+            -webkit-backdrop-filter: blur(20px) saturate(1.2);
+            background: rgba(0, 0, 0, 0.2);
+            transition: all 0.5s;
+            pointer-events: none;
         }
 
-        .search-box input {
-            background: transparent;
-            border: none;
-            outline: none;
-            color: #fff;
-            font-size: 15px;
-            padding: 8px 5px;
-            min-width: 200px;
+        /* ===== NOISE EFFECT ===== */
+        #noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+            background-size: 256px 256px;
         }
 
-        .search-box input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .search-box button {
-            background: linear-gradient(135deg, #00d2ff, #3a7bd5);
-            border: none;
-            padding: 8px 20px;
-            border-radius: 50px;
-            color: #fff;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
-        }
-
-        .search-box button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 30px rgba(0, 210, 255, 0.3);
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .header-actions button {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: #fff;
-            padding: 8px 18px;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
-        }
-
-        .header-actions button:hover {
-            background: rgba(255, 255, 255, 0.12);
-            transform: translateY(-2px);
-        }
-
-        /* ===== MAIN GRID ===== */
-        .main-grid {
-            display: grid;
-            grid-template-columns: 380px 1fr;
-            gap: 20px;
-            padding: 20px;
-            max-width: 1600px;
-            margin: 0 auto;
-            min-height: calc(100vh - 100px);
-        }
-
-        /* ===== LEFT PANEL ===== */
-        .left-panel {
+        /* ===== MAIN CONTENT ===== */
+        #content {
+            position: relative;
+            z-index: 10;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 40px 20px;
+            text-align: center;
         }
 
-        /* ===== CLOCK CARD ===== */
-        .clock-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-            border-radius: 24px;
-            padding: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            backdrop-filter: blur(20px);
-            text-align: center;
+        /* ===== GLASS CARD ===== */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border-radius: 40px;
+            padding: 50px 60px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 30px 120px rgba(0, 0, 0, 0.5),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            max-width: 600px;
+            width: 100%;
+            animation: fadeInUp 1s ease-out;
             position: relative;
             overflow: hidden;
         }
 
-        .clock-card::before {
+        .glass-card::before {
             content: '';
             position: absolute;
             top: -50%;
             left: -50%;
             width: 200%;
             height: 200%;
-            background: conic-gradient(from 0deg, transparent, rgba(0, 210, 255, 0.03), transparent, rgba(58, 123, 213, 0.03), transparent);
-            animation: rotateBg 20s linear infinite;
+            background: conic-gradient(from 0deg, transparent, rgba(255, 255, 255, 0.03), transparent, rgba(255, 255, 255, 0.03), transparent);
+            animation: rotateBg 30s linear infinite;
         }
 
         @keyframes rotateBg {
             to { transform: rotate(360deg); }
         }
 
-        .clock-card > * {
+        .glass-card > * {
             position: relative;
             z-index: 1;
         }
 
-        .clock-time {
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(40px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* ===== LOGO / ICON ===== */
+        .logo-icon {
             font-size: 72px;
+            margin-bottom: 10px;
+            animation: floatIcon 4s ease-in-out infinite;
+            display: inline-block;
+        }
+
+        @keyframes floatIcon {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(5deg); }
+        }
+
+        /* ===== TIME ===== */
+        .time {
+            font-size: 82px;
             font-weight: 900;
-            background: linear-gradient(135deg, #00d2ff, #3a7bd5, #a29bfe);
+            letter-spacing: 4px;
+            background: linear-gradient(135deg, #ffffff 0%, #a8c0ff 50%, #3f2b96 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            text-shadow: none;
             font-variant-numeric: tabular-nums;
-            letter-spacing: 3px;
             line-height: 1;
-            text-shadow: 0 0 60px rgba(0, 210, 255, 0.2);
+            margin-bottom: 5px;
         }
 
-        .clock-date {
-            font-size: 18px;
-            color: rgba(255, 255, 255, 0.6);
-            margin-top: 10px;
-            letter-spacing: 2px;
-        }
-
-        .clock-seconds {
-            font-size: 24px;
+        .time-seconds {
+            font-size: 28px;
+            font-weight: 300;
             color: rgba(255, 255, 255, 0.4);
+            -webkit-text-fill-color: rgba(255, 255, 255, 0.4);
+            margin-left: 5px;
+        }
+
+        .date {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+
+        /* ===== GREETING ===== */
+        .greeting {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            background: linear-gradient(90deg, #f7971e, #ffd200);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .greeting-sub {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 300;
+            margin-bottom: 25px;
+        }
+
+        /* ===== WEATHER ===== */
+        .weather-mini {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 12px 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            margin-bottom: 25px;
+            font-size: 18px;
+        }
+
+        .weather-mini .temp {
+            font-weight: 700;
+            font-size: 24px;
+        }
+
+        .weather-mini .desc {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* ===== QUOTE ===== */
+        .quote {
+            font-size: 18px;
+            font-style: italic;
+            color: rgba(255, 255, 255, 0.5);
+            padding: 15px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .quote-author {
+            display: block;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.3);
+            font-style: normal;
             margin-top: 5px;
             font-weight: 300;
         }
 
-        .clock-greeting {
-            font-size: 20px;
-            margin-top: 15px;
-            padding: 8px 20px;
-            background: rgba(255, 255, 255, 0.05);
+        /* ===== CONTROLS ===== */
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 5px;
+        }
+
+        .controls button {
+            padding: 10px 22px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 50px;
-            display: inline-block;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        /* ===== WEATHER CARD ===== */
-        .weather-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-            border-radius: 24px;
-            padding: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            backdrop-filter: blur(20px);
-            flex: 1;
-        }
-
-        .weather-card h3 {
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: rgba(255, 255, 255, 0.4);
-            margin-bottom: 15px;
-            font-weight: 400;
-        }
-
-        .weather-main {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 15px;
-        }
-
-        .weather-icon {
-            font-size: 64px;
-            animation: floatIcon 3s ease-in-out infinite;
-        }
-
-        @keyframes floatIcon {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-8px); }
-        }
-
-        .weather-temp {
-            font-size: 52px;
-            font-weight: 900;
-            background: linear-gradient(135deg, #ffd700, #f7971e);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .weather-desc {
-            font-size: 18px;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 15px;
-        }
-
-        .weather-details {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .weather-detail-item {
             background: rgba(255, 255, 255, 0.03);
-            padding: 12px 15px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
-        }
-
-        .weather-detail-item .label {
-            font-size: 11px;
-            text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.3);
-            letter-spacing: 1px;
-        }
-
-        .weather-detail-item .value {
-            font-size: 18px;
-            font-weight: 600;
-            margin-top: 3px;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        /* ===== FORECAST ===== */
-        .forecast-card {
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 16px;
-            padding: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
-        }
-
-        .forecast-card h4 {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: rgba(255, 255, 255, 0.3);
-            margin-bottom: 10px;
-        }
-
-        .forecast-list {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding-bottom: 5px;
-        }
-
-        .forecast-list::-webkit-scrollbar {
-            height: 3px;
-        }
-
-        .forecast-list::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-        }
-
-        .forecast-list::-webkit-scrollbar-thumb {
-            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
-            border-radius: 10px;
-        }
-
-        .forecast-item {
-            min-width: 80px;
-            background: rgba(255, 255, 255, 0.03);
-            padding: 12px 15px;
-            border-radius: 12px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            flex-shrink: 0;
-        }
-
-        .forecast-item .day {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .forecast-item .icon {
-            font-size: 28px;
-            margin: 5px 0;
-        }
-
-        .forecast-item .temp {
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .forecast-item .temp-high {
-            color: #ff6b6b;
-        }
-
-        .forecast-item .temp-low {
-            color: #74b9ff;
-            font-size: 13px;
-        }
-
-        /* ===== MAP ===== */
-        .map-container {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
-            border-radius: 24px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            position: relative;
-            min-height: 500px;
-        }
-
-        #map {
-            width: 100%;
-            height: 100%;
-            min-height: 500px;
-            background: #0a0e27;
-        }
-
-        .map-overlay-controls {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .map-overlay-controls button {
-            background: rgba(10, 14, 39, 0.8);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #fff;
-            padding: 10px 14px;
-            border-radius: 10px;
+            color: rgba(255, 255, 255, 0.7);
             cursor: pointer;
             transition: all 0.3s;
             font-size: 14px;
-            width: 44px;
-            height: 44px;
+            font-family: inherit;
             display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 8px;
         }
 
-        .map-overlay-controls button:hover {
-            background: rgba(0, 210, 255, 0.2);
-            border-color: rgba(0, 210, 255, 0.3);
-            transform: scale(1.05);
+        .controls button:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
 
-        .map-overlay-controls button.active {
-            background: rgba(0, 210, 255, 0.2);
-            border-color: #00d2ff;
-            box-shadow: 0 0 30px rgba(0, 210, 255, 0.2);
+        .controls button.active {
+            background: rgba(255, 215, 0, 0.15);
+            border-color: rgba(255, 215, 0, 0.3);
+            color: #ffd700;
         }
 
-        .map-legend {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            z-index: 1000;
-            background: rgba(10, 14, 39, 0.8);
-            backdrop-filter: blur(10px);
-            padding: 12px 16px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
+        .controls button .badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
         }
 
-        .map-legend .gradient {
+        /* ===== WALLPAPER INDICATOR ===== */
+        .wallpaper-indicator {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
             display: flex;
-            gap: 2px;
-            margin-top: 5px;
-            height: 8px;
-            width: 150px;
-            border-radius: 4px;
-            background: linear-gradient(90deg, #74b9ff, #00d2ff, #fdcb6e, #ff6b6b, #e84393);
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            padding: 12px 20px;
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* ===== LOADING ===== */
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .loading .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255, 255, 255, 0.05);
-            border-top: 3px solid #00d2ff;
+        .wallpaper-indicator .dot {
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
+            background: rgba(255, 255, 255, 0.15);
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            padding: 0;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .wallpaper-indicator .dot.active {
+            background: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+            width: 30px;
+            border-radius: 10px;
+        }
+
+        .wallpaper-indicator .dot:hover {
+            transform: scale(1.2);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .wallpaper-indicator .dot.active:hover {
+            background: #ffd700;
+            transform: scale(1.1);
+        }
+
+        /* ===== WALLPAPER NAME ===== */
+        .wallpaper-name {
+            position: fixed;
+            bottom: 85px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.3);
+            letter-spacing: 2px;
+            font-weight: 300;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        .wallpaper-name.show {
+            opacity: 1;
         }
 
         /* ===== RESPONSIVE ===== */
-        @media (max-width: 1024px) {
-            .main-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .left-panel {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 20px;
-            }
-
-            .clock-card {
-                grid-column: 1 / -1;
-            }
-        }
-
         @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 10px;
-                padding: 15px;
+            .glass-card {
+                padding: 35px 30px;
+                border-radius: 30px;
             }
 
-            .search-box input {
-                min-width: 120px;
-                font-size: 13px;
+            .time {
+                font-size: 56px;
             }
 
-            .left-panel {
-                grid-template-columns: 1fr;
+            .time-seconds {
+                font-size: 20px;
             }
 
-            .clock-time {
-                font-size: 48px;
+            .date {
+                font-size: 16px;
             }
 
-            .weather-temp {
-                font-size: 38px;
+            .greeting {
+                font-size: 22px;
             }
 
-            .weather-main {
-                flex-direction: column;
-                text-align: center;
+            .logo-icon {
+                font-size: 56px;
             }
 
-            .weather-details {
-                grid-template-columns: 1fr 1fr;
+            .weather-mini {
+                font-size: 15px;
+                padding: 10px 18px;
             }
 
-            #map, .map-container {
-                min-height: 350px;
+            .weather-mini .temp {
+                font-size: 20px;
+            }
+
+            .quote {
+                font-size: 15px;
+            }
+
+            .controls button {
+                padding: 8px 16px;
+                font-size: 12px;
+            }
+
+            .wallpaper-indicator {
+                padding: 10px 16px;
+                gap: 8px;
+                bottom: 20px;
+            }
+
+            .wallpaper-indicator .dot {
+                width: 8px;
+                height: 8px;
+            }
+
+            .wallpaper-indicator .dot.active {
+                width: 24px;
+            }
+
+            .wallpaper-name {
+                bottom: 70px;
+                font-size: 11px;
+                padding: 4px 14px;
             }
         }
 
         @media (max-width: 480px) {
-            .clock-time {
-                font-size: 36px;
+            .glass-card {
+                padding: 25px 18px;
+                border-radius: 24px;
             }
 
-            .header-actions button {
-                padding: 6px 12px;
-                font-size: 12px;
+            .time {
+                font-size: 40px;
             }
 
-            .search-box {
-                padding: 6px 12px;
+            .time-seconds {
+                font-size: 16px;
             }
 
-            .search-box input {
-                min-width: 80px;
-                font-size: 12px;
+            .logo-icon {
+                font-size: 44px;
             }
 
-            .search-box button {
+            .greeting {
+                font-size: 18px;
+            }
+
+            .controls {
+                gap: 8px;
+            }
+
+            .controls button {
                 padding: 6px 14px;
-                font-size: 12px;
+                font-size: 11px;
             }
         }
 
-        /* ===== CUSTOM SCROLLBAR ===== */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+        /* ===== KEYBOARD SHORTCUT HINT ===== */
+        .shortcut-hint {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 30;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.15);
+            letter-spacing: 1px;
+            text-align: right;
+            line-height: 1.8;
+            pointer-events: none;
+            font-weight: 300;
         }
 
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.02);
+        .shortcut-hint span {
+            display: block;
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.2);
+        @media (max-width: 768px) {
+            .shortcut-hint {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- ===== HEADER ===== -->
-    <header class="header">
-        <div class="logo">
-            <span>🌤️</span> WeatherHub
-        </div>
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="🔍 Tìm thành phố..." value="Hanoi">
-            <button id="searchBtn">Tìm</button>
-        </div>
-        <div class="header-actions">
-            <button onclick="getCurrentLocation()">📍 Vị trí của tôi</button>
-            <button onclick="toggleMapLayer()">🗺️ Lớp bản đồ</button>
-        </div>
-    </header>
 
-    <!-- ===== MAIN ===== -->
-    <div class="main-grid">
-        <!-- LEFT PANEL -->
-        <div class="left-panel">
-            <!-- Clock -->
-            <div class="clock-card">
-                <div class="clock-time" id="clockTime">--:--:--</div>
-                <div class="clock-date" id="clockDate">--</div>
-                <div class="clock-seconds" id="clockSeconds">--</div>
-                <div class="clock-greeting" id="clockGreeting">✨ Chào buổi...</div>
+    <!-- ===== SLIDESHOW ===== -->
+    <div id="slideshow">
+        <!-- 20 Wallpapers động đẹp -->
+        <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1470071459604-7b40ec9e5b4c?w=1920&q=80');" data-name="🌿 Rừng xanh mờ ảo"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80');" data-name="🏖️ Biển hoàng hôn"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80');" data-name="🌌 Dải Ngân Hà"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1920&q=80');" data-name="🏔️ Núi tuyết hùng vĩ"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=1920&q=80');" data-name="🌅 Bình minh trên hồ"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&q=80');" data-name="🌲 Rừng mùa thu"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1920&q=80');" data-name="🏞️ Thác nước hùng vĩ"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&q=80');" data-name="🌳 Rừng thông sương mù"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=80');" data-name="⛰️ Dãy núi hùng vĩ"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1920&q=80');" data-name="🏙️ Phố đêm lung linh"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80');" data-name="🌊 Bãi biển nhiệt đới"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1504608524840-2f2b731ddfc7?w=1920&q=80');" data-name="⛅ Bầu trời mây"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1470071459604-7b40ec9e5b4c?w=1920&q=80');" data-name="🌿 Thiên nhiên bí ẩn"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1510784722466-f2aa9c52fff6?w=1920&q=80');" data-name="🌌 Vũ trụ bao la"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1920&q=80');" data-name="🏔️ Tuyết phủ trắng xóa"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=1920&q=80');" data-name="🌅 Bình minh vàng"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920&q=80');" data-name="🌾 Cánh đồng hoa"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&q=80');" data-name="🌲 Rừng sâu thẳm"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=80');" data-name="⛰️ Núi non hùng tráng"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1920&q=80');" data-name="🌃 Thành phố về đêm"></div>
+    </div>
+
+    <!-- ===== BLUR OVERLAY ===== -->
+    <div id="blur-overlay"></div>
+
+    <!-- ===== NOISE ===== -->
+    <div id="noise"></div>
+
+    <!-- ===== SHORTCUT HINT ===== -->
+    <div class="shortcut-hint">
+        <span>← → Chuyển wallpaper</span>
+        <span>Space Dừng/tự động</span>
+        <span>F Fullscreen</span>
+    </div>
+
+    <!-- ===== WALLPAPER NAME ===== -->
+    <div class="wallpaper-name" id="wallpaperName">🌿 Rừng xanh mờ ảo</div>
+
+    <!-- ===== WALLPAPER INDICATOR ===== -->
+    <div class="wallpaper-indicator" id="indicator"></div>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <div id="content">
+        <div class="glass-card">
+            <div class="logo-icon">✨</div>
+
+            <!-- Time -->
+            <div>
+                <span class="time" id="time">00:00</span>
+                <span class="time-seconds" id="seconds">00</span>
             </div>
+            <div class="date" id="date">Thứ Hai, 01 Tháng 1, 2024</div>
+
+            <!-- Greeting -->
+            <div class="greeting" id="greeting">🌅 Chào buổi sáng!</div>
+            <div class="greeting-sub" id="greetingSub">Một ngày mới đầy cảm hứng</div>
 
             <!-- Weather -->
-            <div class="weather-card" id="weatherCard">
-                <h3>🌡️ Thời tiết hiện tại</h3>
-                <div id="weatherContent">
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        <p>Đang tải dữ liệu...</p>
-                    </div>
-                </div>
-
-                <!-- Forecast -->
-                <div class="forecast-card">
-                    <h4>📅 Dự báo 5 ngày</h4>
-                    <div class="forecast-list" id="forecastList">
-                        <div class="loading" style="padding:10px;font-size:12px;">
-                            Đang tải...
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- MAP -->
-        <div class="map-container">
-            <div id="map"></div>
-
-            <!-- Map Controls -->
-            <div class="map-overlay-controls">
-                <button onclick="zoomIn()" title="Phóng to">➕</button>
-                <button onclick="zoomOut()" title="Thu nhỏ">➖</button>
-                <button onclick="resetMapView()" title="Về vị trí ban đầu">🏠</button>
-                <button id="toggleWindLayer" class="active" onclick="toggleWindLayer()" title="Hiển thị gió">💨</button>
-                <button id="toggleTempLayer" onclick="toggleTempLayer()" title="Hiển thị nhiệt độ">🌡️</button>
+            <div class="weather-mini" id="weatherMini">
+                <span>🌤️</span>
+                <span class="temp" id="weatherTemp">26°C</span>
+                <span class="desc" id="weatherDesc">Trời trong</span>
+                <span>•</span>
+                <span>💨 <span id="weatherWind">12 km/h</span></span>
             </div>
 
-            <!-- Legend -->
-            <div class="map-legend">
-                <span>🌡️ Nhiệt độ</span>
-                <div class="gradient"></div>
-                <span style="font-size:10px;display:flex;justify-content:space-between;margin-top:3px;">
-                    <span>10°C</span>
-                    <span>30°C</span>
-                    <span>40°C+</span>
-                </span>
+            <!-- Quote -->
+            <div class="quote" id="quote">
+                "Hãy sống như ngày mai không tồn tại"
+                <span class="quote-author">— Seneca</span>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button id="prevBtn" title="Trước đó">⏮️ Trước</button>
+                <button id="autoBtn" class="active" title="Tự động chạy">▶️ Tự động</button>
+                <button id="nextBtn" title="Tiếp theo">Tiếp ⏭️</button>
+                <button id="fullscreenBtn" title="Toàn màn hình">⛶ Full</button>
+                <button id="blurToggleBtn" title="Bật/tắt Blur">🌫️ Blur</button>
             </div>
         </div>
     </div>
 
-    <!-- ===== SCRIPTS ===== -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         // ============================================================
-        // 1. CLOCK
+        // 1. SLIDESHOW ENGINE
+        // ============================================================
+        const slides = document.querySelectorAll('.slide');
+        let currentSlide = 0;
+        let isAuto = true;
+        let autoInterval = null;
+        const AUTO_DELAY = 6000;
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+
+            // Update wallpaper name
+            const name = slides[index].dataset.name || 'Cảnh đẹp';
+            const nameEl = document.getElementById('wallpaperName');
+            nameEl.textContent = name;
+            nameEl.classList.add('show');
+            clearTimeout(nameEl._hideTimeout);
+            nameEl._hideTimeout = setTimeout(() => {
+                nameEl.classList.remove('show');
+            }, 2000);
+
+            // Update indicator
+            document.querySelectorAll('.dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+
+            currentSlide = index;
+        }
+
+        function nextSlide() {
+            const next = (currentSlide + 1) % slides.length;
+            showSlide(next);
+        }
+
+        function prevSlide() {
+            const prev = (currentSlide - 1 + slides.length) % slides.length;
+            showSlide(prev);
+        }
+
+        function startAuto() {
+            if (autoInterval) clearInterval(autoInterval);
+            autoInterval = setInterval(nextSlide, AUTO_DELAY);
+            document.getElementById('autoBtn').textContent = '⏸️ Tự động';
+            document.getElementById('autoBtn').classList.add('active');
+            isAuto = true;
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = '▶️ Tự động';
+            document.getElementById('autoBtn').classList.remove('active');
+            isAuto = false;
+        }
+
+        function toggleAuto() {
+            if (isAuto) {
+                stopAuto();
+            } else {
+                startAuto();
+            }
+        }
+
+        // ============================================================
+        // 2. INDICATOR DOTS
+        // ============================================================
+        function createIndicators() {
+            const container = document.getElementById('indicator');
+            slides.forEach((_, i) => {
+                const dot = document.createElement('button');
+                dot.className = 'dot' + (i === 0 ? ' active' : '');
+                dot.setAttribute('data-index', i);
+                dot.addEventListener('click', () => {
+                    if (isAuto) stopAuto();
+                    showSlide(i);
+                });
+                container.appendChild(dot);
+            });
+        }
+        createIndicators();
+
+        // ============================================================
+        // 3. CLOCK
         // ============================================================
         function updateClock() {
             const now = new Date();
@@ -647,535 +665,164 @@
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
 
-            document.getElementById('clockTime').textContent = `${hours}:${minutes}:${seconds}`;
-            document.getElementById('clockSeconds').textContent = `⏱️ ${seconds}s`;
+            document.getElementById('time').textContent = `${hours}:${minutes}`;
+            document.getElementById('seconds').textContent = seconds;
 
             // Date
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('clockDate').textContent = now.toLocaleDateString('vi-VN', options);
+            document.getElementById('date').textContent = now.toLocaleDateString('vi-VN', options);
 
             // Greeting
             const hour = now.getHours();
             let greeting = '🌙 Chúc bạn ngủ ngon!';
-            if (hour >= 5 && hour < 12) greeting = '🌅 Chào buổi sáng!';
-            else if (hour >= 12 && hour < 18) greeting = '☀️ Chào buổi chiều!';
-            else if (hour >= 18 && hour < 22) greeting = '🌇 Chào buổi tối!';
-            document.getElementById('clockGreeting').textContent = greeting;
+            let sub = 'Giấc mơ đẹp nhé';
+            if (hour >= 5 && hour < 12) {
+                greeting = '🌅 Chào buổi sáng!';
+                sub = 'Một ngày mới đầy cảm hứng';
+            } else if (hour >= 12 && hour < 18) {
+                greeting = '☀️ Chào buổi chiều!';
+                sub = 'Tận hưởng khoảnh khắc bình yên';
+            } else if (hour >= 18 && hour < 22) {
+                greeting = '🌇 Chào buổi tối!';
+                sub = 'Thư giãn sau một ngày dài';
+            }
+            document.getElementById('greeting').textContent = greeting;
+            document.getElementById('greetingSub').textContent = sub;
         }
 
         updateClock();
         setInterval(updateClock, 1000);
 
         // ============================================================
-        // 2. MAP (Leaflet)
+        // 4. WEATHER (Simulated)
         // ============================================================
-        let map;
-        let currentCity = 'Hanoi';
-        let windLayer = null;
-        let tempLayer = null;
-        let showWind = true;
-        let showTemp = false;
-        let mapMarkers = [];
+        function updateWeather() {
+            const temps = [22, 24, 26, 28, 30, 23, 25, 27];
+            const descs = ['Trời trong', 'Có mây', 'Nắng nhẹ', 'Mát mẻ', 'Ấm áp', 'Se lạnh'];
+            const icons = ['☀️', '⛅', '🌤️', '🌥️', '☁️', '🌦️'];
+            const winds = [8, 12, 15, 10, 18, 14];
 
-        function initMap(lat = 21.0285, lng = 105.8542) {
-            if (map) {
-                map.setView([lat, lng], 8);
-                return;
-            }
+            const temp = temps[Math.floor(Math.random() * temps.length)];
+            const desc = descs[Math.floor(Math.random() * descs.length)];
+            const icon = icons[Math.floor(Math.random() * icons.length)];
+            const wind = winds[Math.floor(Math.random() * winds.length)];
 
-            map = L.map('map', {
-                center: [lat, lng],
-                zoom: 8,
-                zoomControl: false,
-                attributionControl: true
-            });
-
-            // Base tile layer (dark style like Windy)
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; CartoDB',
-                subdomains: 'abcd',
-                maxZoom: 19,
-                minZoom: 3
-            }).addTo(map);
-
-            // Add marker
-            addMarker(lat, lng, currentCity);
-
-            // Add wind layer (simulated with arrows)
-            addWindLayer();
-
-            // Resize handler
-            setTimeout(() => map.invalidateSize(), 500);
+            document.getElementById('weatherTemp').textContent = `${temp}°C`;
+            document.getElementById('weatherDesc').textContent = desc;
+            document.querySelector('.weather-mini .temp').previousElementSibling.textContent = icon;
+            document.getElementById('weatherWind').textContent = `${wind} km/h`;
         }
 
-        function addMarker(lat, lng, name) {
-            // Clear old markers
-            mapMarkers.forEach(m => map.removeLayer(m));
-            mapMarkers = [];
-
-            const icon = L.divIcon({
-                html: `<div style="
-                    background: linear-gradient(135deg, #00d2ff, #3a7bd5);
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 20px;
-                    box-shadow: 0 0 30px rgba(0,210,255,0.5);
-                    border: 2px solid rgba(255,255,255,0.2);
-                ">📍</div>`,
-                className: '',
-                iconSize: [40, 40],
-                iconAnchor: [20, 40]
-            });
-
-            const marker = L.marker([lat, lng], { icon }).addTo(map);
-            marker.bindPopup(`
-                <div style="color:#000;font-weight:700;font-size:16px;">
-                    ${name}
-                    <br>
-                    <span style="font-weight:400;font-size:12px;color:#666;">
-                        🕐 ${new Date().toLocaleTimeString('vi-VN')}
-                    </span>
-                </div>
-            `);
-            marker.openPopup();
-
-            mapMarkers.push(marker);
-        }
+        updateWeather();
+        setInterval(updateWeather, 30000);
 
         // ============================================================
-        // 3. WIND LAYER (Simulated)
+        // 5. QUOTES
         // ============================================================
-        function addWindLayer() {
-            if (windLayer) {
-                map.removeLayer(windLayer);
-                windLayer = null;
-            }
+        const quotes = [
+            { text: "Hãy sống như ngày mai không tồn tại", author: "Seneca" },
+            { text: "Điều duy nhất không đổi là sự thay đổi", author: "Heraclitus" },
+            { text: "Hạnh phúc không phải là đích đến, mà là hành trình", author: "Ralph Waldo Emerson" },
+            { text: "Cuộc sống là những gì xảy ra khi bạn đang bận làm kế hoạch khác", author: "John Lennon" },
+            { text: "Thành công không phải là chìa khóa của hạnh phúc. Hạnh phúc mới là chìa khóa của thành công", author: "Albert Schweitzer" },
+            { text: "Cách tốt nhất để dự đoán tương lai là tạo ra nó", author: "Peter Drucker" },
+            { text: "Đừng đếm ngày, hãy làm mỗi ngày đều đáng nhớ", author: "Muhammad Ali" },
+            { text: "Sống là cho đi, không chỉ nhận về", author: "Mother Teresa" },
+            { text: "Mọi giấc mơ đều bắt đầu từ một người dám thử", author: "Unknown" },
+            { text: "Bạn không bao giờ quá già để đặt ra mục tiêu mới", author: "C.S. Lewis" }
+        ];
 
-            if (!showWind) return;
-
-            // Create wind arrows using canvas
-            const windData = [];
-            const bounds = map.getBounds();
-            const latStep = (bounds.getNorth() - bounds.getSouth()) / 10;
-            const lngStep = (bounds.getEast() - bounds.getWest()) / 10;
-
-            for (let i = 0; i < 8; i++) {
-                for (let j = 0; j < 8; j++) {
-                    const lat = bounds.getSouth() + i * latStep + latStep / 2;
-                    const lng = bounds.getWest() + j * lngStep + lngStep / 2;
-                    const angle = (i * 45 + j * 30 + Date.now() / 50000) % 360;
-                    const speed = 0.5 + Math.random() * 2;
-                    windData.push({ lat, lng, angle, speed });
-                }
-            }
-
-            // Draw wind arrows
-            const canvas = document.createElement('canvas');
-            canvas.width = 100;
-            canvas.height = 100;
-
-            windLayer = L.canvasLayer({
-                draw: function() {
-                    const ctx = this.canvas.getContext('2d');
-                    const size = this.canvas.width;
-                    ctx.clearRect(0, 0, size, size);
-
-                    // Draw wind arrows
-                    windData.forEach((w, index) => {
-                        const x = (w.lng - bounds.getWest()) / (bounds.getEast() - bounds.getWest()) * size;
-                        const y = (bounds.getNorth() - w.lat) / (bounds.getNorth() - bounds.getSouth()) * size;
-
-                        const angleRad = (w.angle * Math.PI) / 180;
-                        const len = 8 + w.speed * 4;
-                        const endX = x + len * Math.cos(angleRad);
-                        const endY = y - len * Math.sin(angleRad);
-
-                        ctx.beginPath();
-                        ctx.moveTo(x, y);
-                        ctx.lineTo(endX, endY);
-                        ctx.strokeStyle = `hsla(200, 80%, 70%, ${0.3 + w.speed * 0.2})`;
-                        ctx.lineWidth = 1.5 + w.speed * 0.5;
-                        ctx.stroke();
-
-                        // Arrowhead
-                        const arrowSize = 5;
-                        const a1 = angleRad + 0.5;
-                        const a2 = angleRad - 0.5;
-                        ctx.beginPath();
-                        ctx.moveTo(endX, endY);
-                        ctx.lineTo(endX - arrowSize * Math.cos(a1), endY + arrowSize * Math.sin(a1));
-                        ctx.moveTo(endX, endY);
-                        ctx.lineTo(endX - arrowSize * Math.cos(a2), endY + arrowSize * Math.sin(a2));
-                        ctx.strokeStyle = `hsla(200, 80%, 70%, ${0.3 + w.speed * 0.2})`;
-                        ctx.lineWidth = 1.5;
-                        ctx.stroke();
-                    });
-                }
-            });
-
-            windLayer.addTo(map);
-
-            // Animate wind layer
-            function animateWind() {
-                if (!showWind) return;
-                if (windLayer) {
-                    windLayer.redraw();
-                }
-                requestAnimationFrame(animateWind);
-            }
-            animateWind();
+        function updateQuote() {
+            const quote = quotes[Math.floor(Math.random() * quotes.length)];
+            document.getElementById('quote').innerHTML = `"${quote.text}" <span class="quote-author">— ${quote.author}</span>`;
         }
+
+        updateQuote();
+        setInterval(updateQuote, 15000);
 
         // ============================================================
-        // 4. WEATHER DATA (OpenWeatherMap API)
+        // 6. CONTROLS
         // ============================================================
-        const API_KEY = 'b6907d289e10d714a6e88b30761fae0f';
-
-        async function getWeather(city) {
-            try {
-                const response = await fetch(
-                    `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric&lang=vi`
-                );
-                if (!response.ok) throw new Error('Không tìm thấy thành phố');
-                const data = await response.json();
-                return data;
-            } catch (error) {
-                throw error;
-            }
-        }
-
-        async function getForecast(city) {
-            try {
-                const response = await fetch(
-                    `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric&lang=vi&cnt=5`
-                );
-                if (!response.ok) throw new Error('Không thể lấy dự báo');
-                const data = await response.json();
-                return data;
-            } catch (error) {
-                throw error;
-            }
-        }
-
-        function getWeatherEmoji(weatherId, isNight = false) {
-            if (weatherId >= 200 && weatherId < 300) return '⛈️';
-            if (weatherId >= 300 && weatherId < 500) return '🌧️';
-            if (weatherId >= 500 && weatherId < 600) return '🌧️';
-            if (weatherId >= 600 && weatherId < 700) return '❄️';
-            if (weatherId >= 700 && weatherId < 800) return '🌫️';
-            if (weatherId === 800) return isNight ? '🌙' : '☀️';
-            if (weatherId === 801) return isNight ? '☁️' : '🌤️';
-            if (weatherId === 802) return '⛅';
-            if (weatherId >= 803) return '☁️';
-            return '🌈';
-        }
-
-        function getWindDirection(deg) {
-            const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-            return dirs[Math.round(deg / 45) % 8];
-        }
-
-        async function updateWeather(city) {
-            const weatherContent = document.getElementById('weatherContent');
-            const forecastList = document.getElementById('forecastList');
-
-            try {
-                // Show loading
-                weatherContent.innerHTML = `
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        <p>Đang tải dữ liệu...</p>
-                    </div>
-                `;
-                forecastList.innerHTML = `
-                    <div class="loading" style="padding:10px;font-size:12px;">
-                        Đang tải...
-                    </div>
-                `;
-
-                const [weather, forecast] = await Promise.all([
-                    getWeather(city),
-                    getForecast(city)
-                ]);
-
-                // Update weather
-                const isNight = new Date().getHours() < 6 || new Date().getHours() > 18;
-                const emoji = getWeatherEmoji(weather.weather[0].id, isNight);
-
-                weatherContent.innerHTML = `
-                    <div class="weather-main">
-                        <div class="weather-icon">${emoji}</div>
-                        <div>
-                            <div class="weather-temp">${Math.round(weather.main.temp)}°C</div>
-                            <div class="weather-desc">${weather.weather[0].description}</div>
-                        </div>
-                    </div>
-                    <div class="weather-details">
-                        <div class="weather-detail-item">
-                            <div class="label">🌡️ Cảm giác</div>
-                            <div class="value">${Math.round(weather.main.feels_like)}°C</div>
-                        </div>
-                        <div class="weather-detail-item">
-                            <div class="label">💧 Độ ẩm</div>
-                            <div class="value">${weather.main.humidity}%</div>
-                        </div>
-                        <div class="weather-detail-item">
-                            <div class="label">💨 Gió</div>
-                            <div class="value">${Math.round(weather.wind.speed * 3.6)} km/h</div>
-                        </div>
-                        <div class="weather-detail-item">
-                            <div class="label">🧭 Hướng gió</div>
-                            <div class="value">${getWindDirection(weather.wind.deg)}</div>
-                        </div>
-                        <div class="weather-detail-item">
-                            <div class="label">☀️ Áp suất</div>
-                            <div class="value">${weather.main.pressure} hPa</div>
-                        </div>
-                        <div class="weather-detail-item">
-                            <div class="label">👁️ Tầm nhìn</div>
-                            <div class="value">${(weather.visibility / 1000).toFixed(1)} km</div>
-                        </div>
-                    </div>
-                `;
-
-                // Update forecast
-                forecastList.innerHTML = '';
-                const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
-
-                forecast.list.forEach((item, index) => {
-                    const date = new Date(item.dt * 1000);
-                    const day = days[date.getDay()];
-                    const emojiF = getWeatherEmoji(item.weather[0].id);
-
-                    const div = document.createElement('div');
-                    div.className = 'forecast-item';
-                    div.innerHTML = `
-                        <div class="day">${day}</div>
-                        <div class="icon">${emojiF}</div>
-                        <div class="temp">
-                            <span class="temp-high">${Math.round(item.main.temp_max)}°</span>
-                            <span class="temp-low">${Math.round(item.main.temp_min)}°</span>
-                        </div>
-                    `;
-                    forecastList.appendChild(div);
-                });
-
-                // Update map
-                const lat = weather.coord.lat;
-                const lng = weather.coord.lon;
-                currentCity = city;
-
-                if (map) {
-                    map.setView([lat, lng], 8);
-                    addMarker(lat, lng, city);
-                } else {
-                    initMap(lat, lng);
-                }
-
-                // Update search input
-                document.getElementById('searchInput').value = city;
-
-            } catch (error) {
-                weatherContent.innerHTML = `
-                    <div style="text-align:center;padding:30px;color:#ff6b6b;">
-                        <div style="font-size:40px;margin-bottom:10px;">😅</div>
-                        <p>${error.message}</p>
-                        <p style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:10px;">
-                            Thử nhập tên thành phố khác
-                        </p>
-                    </div>
-                `;
-                forecastList.innerHTML = '';
-            }
-        }
-
-        // ============================================================
-        // 5. SEARCH & LOCATION
-        // ============================================================
-        document.getElementById('searchBtn').addEventListener('click', () => {
-            const city = document.getElementById('searchInput').value.trim();
-            if (city) updateWeather(city);
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (isAuto) stopAuto();
+            prevSlide();
         });
 
-        document.getElementById('searchInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                document.getElementById('searchBtn').click();
-            }
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (isAuto) stopAuto();
+            nextSlide();
         });
 
-        function getCurrentLocation() {
-            if (!navigator.geolocation) {
-                alert('Trình duyệt không hỗ trợ định vị!');
-                return;
-            }
+        document.getElementById('autoBtn').addEventListener('click', toggleAuto);
 
-            const btn = event.target;
-            btn.textContent = '⏳ Đang tìm...';
-            btn.disabled = true;
-
-            navigator.geolocation.getCurrentPosition(
-                async (position) => {
-                    const { latitude, longitude } = position.coords;
-
-                    try {
-                        // Reverse geocode
-                        const response = await fetch(
-                            `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric`
-                        );
-                        const data = await response.json();
-                        const city = data.name;
-
-                        if (map) {
-                            map.setView([latitude, longitude], 10);
-                            addMarker(latitude, longitude, city);
-                        } else {
-                            initMap(latitude, longitude);
-                        }
-
-                        await updateWeather(city);
-                        btn.textContent = '📍 Vị trí của tôi';
-                        btn.disabled = false;
-
-                    } catch (error) {
-                        alert('Không thể lấy thông tin thành phố!');
-                        btn.textContent = '📍 Vị trí của tôi';
-                        btn.disabled = false;
-                    }
-                },
-                (error) => {
-                    alert('Không thể lấy vị trí! Vui lòng cho phép truy cập vị trí.');
-                    btn.textContent = '📍 Vị trí của tôi';
-                    btn.disabled = false;
-                }
-            );
-        }
-
-        // ============================================================
-        // 6. MAP CONTROLS
-        // ============================================================
-        function zoomIn() {
-            if (map) map.zoomIn();
-        }
-
-        function zoomOut() {
-            if (map) map.zoomOut();
-        }
-
-        function resetMapView() {
-            if (map && currentCity) {
-                updateWeather(currentCity);
-            }
-        }
-
-        function toggleWindLayer() {
-            showWind = !showWind;
-            const btn = document.getElementById('toggleWindLayer');
-            btn.classList.toggle('active');
-
-            if (showWind) {
-                addWindLayer();
+        document.getElementById('fullscreenBtn').addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
             } else {
-                if (windLayer) {
-                    map.removeLayer(windLayer);
-                    windLayer = null;
-                }
+                document.exitFullscreen();
             }
-        }
+        });
 
-        function toggleTempLayer() {
-            showTemp = !showTemp;
-            const btn = document.getElementById('toggleTempLayer');
-            btn.classList.toggle('active');
-
-            // Simulated temperature overlay
-            if (showTemp) {
-                // Add a simple heatmap simulation
-                if (tempLayer) {
-                    map.removeLayer(tempLayer);
-                    tempLayer = null;
-                }
-
-                // Create a semi-transparent overlay with temperature colors
-                const canvas = document.createElement('canvas');
-                canvas.width = 200;
-                canvas.height = 200;
-
-                tempLayer = L.canvasLayer({
-                    draw: function() {
-                        const ctx = this.canvas.getContext('2d');
-                        const size = this.canvas.width;
-                        ctx.clearRect(0, 0, size, size);
-
-                        // Draw gradient circles simulating temperature
-                        const bounds = map.getBounds();
-                        const centerLat = (bounds.getNorth() + bounds.getSouth()) / 2;
-                        const centerLng = (bounds.getEast() + bounds.getWest()) / 2;
-
-                        for (let i = 0; i < 12; i++) {
-                            const lat = bounds.getSouth() + Math.random() * (bounds.getNorth() - bounds.getSouth());
-                            const lng = bounds.getWest() + Math.random() * (bounds.getEast() - bounds.getWest());
-
-                            const x = (lng - bounds.getWest()) / (bounds.getEast() - bounds.getWest()) * size;
-                            const y = (bounds.getNorth() - lat) / (bounds.getNorth() - bounds.getSouth()) * size;
-
-                            const radius = 20 + Math.random() * 30;
-                            const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
-                            const hue = 200 + Math.random() * 40;
-                            gradient.addColorStop(0, `hsla(${hue}, 80%, 60%, 0.15)`);
-                            gradient.addColorStop(0.5, `hsla(${hue + 20}, 80%, 50%, 0.08)`);
-                            gradient.addColorStop(1, `hsla(${hue + 40}, 80%, 40%, 0)`);
-
-                            ctx.beginPath();
-                            ctx.arc(x, y, radius, 0, Math.PI * 2);
-                            ctx.fillStyle = gradient;
-                            ctx.fill();
-                        }
-                    }
-                });
-
-                tempLayer.addTo(map);
-
-                // Animate temp layer
-                function animateTemp() {
-                    if (!showTemp) return;
-                    if (tempLayer) {
-                        tempLayer.redraw();
-                    }
-                    setTimeout(animateTemp, 2000);
-                }
-                animateTemp();
-
+        document.getElementById('blurToggleBtn').addEventListener('click', function() {
+            const overlay = document.getElementById('blur-overlay');
+            const currentBlur = getComputedStyle(overlay).backdropFilter;
+            if (currentBlur.includes('blur(20px)')) {
+                overlay.style.backdropFilter = 'blur(0px) saturate(1)';
+                overlay.style.background = 'rgba(0,0,0,0.05)';
+                this.textContent = '🌫️ Blur OFF';
+                this.classList.remove('active');
             } else {
-                if (tempLayer) {
-                    map.removeLayer(tempLayer);
-                    tempLayer = null;
-                }
-            }
-        }
-
-        // ============================================================
-        // 7. AUTO-LOAD & INIT
-        // ============================================================
-        // Load default city on start
-        window.addEventListener('load', () => {
-            updateWeather('Hanoi');
-        });
-
-        // Handle resize for map
-        window.addEventListener('resize', () => {
-            if (map) {
-                setTimeout(() => map.invalidateSize(), 300);
+                overlay.style.backdropFilter = 'blur(20px) saturate(1.2)';
+                overlay.style.background = 'rgba(0,0,0,0.2)';
+                this.textContent = '🌫️ Blur';
+                this.classList.add('active');
             }
         });
+        document.getElementById('blurToggleBtn').classList.add('active');
 
-        console.log('🌤️ WeatherHub loaded!');
-        console.log('📍 Tìm kiếm thành phố để xem thời tiết + map');
-        console.log('💨 Bật/tắt lớp gió và nhiệt độ trên map');
-        console.log('🕐 Đồng hồ hiển thị thời gian thực');
+        // ============================================================
+        // 7. KEYBOARD SHORTCUTS
+        // ============================================================
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                if (isAuto) stopAuto();
+                prevSlide();
+                e.preventDefault();
+            } else if (e.key === 'ArrowRight') {
+                if (isAuto) stopAuto();
+                nextSlide();
+                e.preventDefault();
+            } else if (e.key === ' ' || e.key === 'Space') {
+                toggleAuto();
+                e.preventDefault();
+            } else if (e.key === 'f' || e.key === 'F') {
+                document.getElementById('fullscreenBtn').click();
+                e.preventDefault();
+            } else if (e.key === 'b' || e.key === 'B') {
+                document.getElementById('blurToggleBtn').click();
+                e.preventDefault();
+            }
+        });
+
+        // ============================================================
+        // 8. START AUTO
+        // ============================================================
+        startAuto();
+
+        // Show first wallpaper name
+        setTimeout(() => {
+            document.getElementById('wallpaperName').classList.add('show');
+            setTimeout(() => {
+                document.getElementById('wallpaperName').classList.remove('show');
+            }, 2000);
+        }, 500);
+
+        console.log('✨ DreamScape loaded!');
+        console.log('⌨️ ← → Chuyển wallpaper');
+        console.log('⌨️ Space Dừng/tự động');
+        console.log('⌨️ F Fullscreen');
+        console.log('⌨️ B Bật/tắt Blur');
     </script>
+
 </body>
 </html>
