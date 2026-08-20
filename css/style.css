@@ -1,1 +1,488 @@
 
+/* ===== RESET & BASE ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Quicksand', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 30%, #fbc2eb 60%, #a18cd1 100%);
+    background-attachment: fixed;
+    padding: 20px;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* ===== HEART BACKGROUND ANIMATION ===== */
+.bg-hearts {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+}
+
+.bg-hearts::before,
+.bg-hearts::after {
+    content: '❤️';
+    position: absolute;
+    font-size: 30px;
+    opacity: 0.15;
+    animation: floatHeart 12s infinite linear;
+}
+
+.bg-hearts::before {
+    left: 5%;
+    animation-delay: 0s;
+    font-size: 40px;
+}
+
+.bg-hearts::after {
+    right: 10%;
+    animation-delay: 4s;
+    font-size: 50px;
+}
+
+@keyframes floatHeart {
+    0% {
+        transform: translateY(100vh) rotate(0deg) scale(0.5);
+        opacity: 0.1;
+    }
+    50% {
+        opacity: 0.2;
+    }
+    100% {
+        transform: translateY(-10vh) rotate(720deg) scale(1.2);
+        opacity: 0;
+    }
+}
+
+/* ===== CONTAINER ===== */
+.container {
+    max-width: 600px;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+}
+
+/* ===== BANK HEADER ===== */
+.bank-header {
+    text-align: center;
+    margin-bottom: 30px;
+    color: white;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.bank-header .logo {
+    font-size: 60px;
+    display: block;
+    animation: bounceLogo 2s infinite ease-in-out;
+}
+
+@keyframes bounceLogo {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.bank-name {
+    font-family: 'Dancing Script', cursive;
+    font-size: 2.8rem;
+    font-weight: 700;
+    margin: 5px 0;
+    background: linear-gradient(135deg, #fff, #ffe0e6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.slogan {
+    font-size: 1.1rem;
+    font-weight: 300;
+    opacity: 0.9;
+    font-style: italic;
+}
+
+/* ===== LOVE CARD ===== */
+.love-card {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px);
+    border-radius: 30px;
+    padding: 40px 35px;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15), 0 10px 30px rgba(255, 107, 107, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.love-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 20%, rgba(255, 107, 107, 0.05), transparent 60%);
+    pointer-events: none;
+}
+
+.love-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.2), 0 15px 40px rgba(255, 107, 107, 0.25);
+}
+
+/* ===== CARD CONTENT ===== */
+.card-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+}
+
+.avatar .emoji-big {
+    font-size: 80px;
+    display: inline-block;
+    animation: pulseHeart 2s infinite ease-in-out;
+}
+
+@keyframes pulseHeart {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.15);
+    }
+}
+
+.greeting {
+    font-family: 'Dancing Script', cursive;
+    font-size: 2rem;
+    color: #e75480;
+    margin: 15px 0 10px;
+    background: linear-gradient(135deg, #e75480, #ff6b6b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.message {
+    font-size: 1.05rem;
+    color: #555;
+    line-height: 1.7;
+    margin-bottom: 25px;
+    font-weight: 400;
+}
+
+.message strong {
+    color: #e75480;
+    font-weight: 700;
+}
+
+/* ===== ACCOUNT INFO ===== */
+.account-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    background: linear-gradient(135deg, #fdf2f4, #fef6f0);
+    border-radius: 20px;
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid rgba(231, 84, 128, 0.15);
+}
+
+.balance,
+.account-number {
+    display: flex;
+    flex-direction: column;
+}
+
+.balance .label,
+.account-number .label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #999;
+    font-weight: 600;
+}
+
+.balance .amount {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #e75480;
+    margin-top: 5px;
+    font-family: 'Dancing Script', cursive;
+}
+
+.account-number .number {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #444;
+    margin-top: 5px;
+    letter-spacing: 2px;
+    background: #f0f0f0;
+    padding: 4px 12px;
+    border-radius: 30px;
+    display: inline-block;
+}
+
+/* ===== BUTTONS ===== */
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin: 20px 0 10px;
+}
+
+.btn {
+    font-family: 'Quicksand', sans-serif;
+    padding: 14px 28px;
+    border: none;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.5px;
+    flex: 1 1 auto;
+    justify-content: center;
+    min-width: 140px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    color: white;
+    box-shadow: 0 8px 25px rgba(238, 90, 36, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 35px rgba(238, 90, 36, 0.4);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+    color: white;
+    box-shadow: 0 8px 25px rgba(108, 92, 231, 0.3);
+}
+
+.btn-secondary:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 35px rgba(108, 92, 231, 0.4);
+}
+
+.btn-special {
+    background: linear-gradient(135deg, #fd79a8, #e84393);
+    color: white;
+    box-shadow: 0 8px 25px rgba(232, 67, 147, 0.3);
+    animation: glowSpecial 2s infinite alternate;
+}
+
+@keyframes glowSpecial {
+    0% {
+        box-shadow: 0 8px 25px rgba(232, 67, 147, 0.3);
+    }
+    100% {
+        box-shadow: 0 8px 40px rgba(232, 67, 147, 0.6);
+    }
+}
+
+.btn-special:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(232, 67, 147, 0.5);
+}
+
+.btn:active {
+    transform: scale(0.95);
+}
+
+/* ===== LOVE LETTER ===== */
+.love-letter {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeInLetter 0.4s ease;
+}
+
+@keyframes fadeInLetter {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.letter-content {
+    background: white;
+    border-radius: 30px;
+    padding: 50px 45px;
+    max-width: 500px;
+    width: 90%;
+    position: relative;
+    box-shadow: 0 50px 100px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+.letter-content h3 {
+    font-family: 'Dancing Script', cursive;
+    font-size: 2.2rem;
+    color: #e75480;
+    margin-bottom: 20px;
+}
+
+.letter-content p {
+    font-size: 1.1rem;
+    line-height: 2;
+    color: #444;
+    font-family: 'Quicksand', sans-serif;
+}
+
+.letter-content .signature {
+    font-family: 'Dancing Script', cursive;
+    font-size: 1.4rem;
+    color: #e75480;
+    display: block;
+    margin-top: 15px;
+}
+
+.btn-close-letter {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+    color: #aaa;
+    transition: color 0.3s;
+}
+
+.btn-close-letter:hover {
+    color: #e75480;
+    transform: rotate(90deg);
+}
+
+/* ===== FOOTER ===== */
+footer {
+    text-align: center;
+    margin-top: 30px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+footer .footer-note {
+    font-size: 0.75rem;
+    opacity: 0.6;
+    margin-top: 5px;
+}
+
+/* ===== NOTIFICATION TOAST ===== */
+.toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 14px 30px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 500;
+    z-index: 2000;
+    animation: slideUpToast 0.5s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    max-width: 90%;
+    text-align: center;
+}
+
+@keyframes slideUpToast {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* ===== CONFETTI KEYFRAMES (injected by JS) ===== */
+@keyframes confettiFall {
+    0% {
+        transform: translateY(0) rotate(0deg) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(110vh) rotate(720deg) scale(0.3);
+        opacity: 0;
+    }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 520px) {
+    .bank-name {
+        font-size: 2rem;
+    }
+
+    .love-card {
+        padding: 25px 20px;
+    }
+
+    .account-info {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .greeting {
+        font-size: 1.5rem;
+    }
+
+    .btn {
+        padding: 12px 20px;
+        font-size: 0.85rem;
+        min-width: 100%;
+        flex: 1 1 100%;
+    }
+
+    .avatar .emoji-big {
+        font-size: 60px;
+    }
+
+    .letter-content {
+        padding: 30px 20px;
+    }
+
+    .letter-content p {
+        font-size: 0.95rem;
+    }
+}
