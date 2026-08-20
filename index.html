@@ -3,826 +3,258 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>✨ DreamScape - Màn hình chờ đẹp</title>
+    <title>TikTok Vibe Photo Gallery</title>
     <style>
-        /* ===== RESET ===== */
+        :root {
+            --bg-color: #0d0f12;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --accent-pink: #ff0050;
+            --accent-cyan: #00f2fe;
+            --text-color: #ffffff;
+        }
+
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
 
         body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            height: 100vh;
-            overflow: hidden;
-            background: #0a0a0a;
-            color: #fff;
-            user-select: none;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
         }
 
-        /* ===== BACKGROUND SLIDESHOW ===== */
-        #slideshow {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-        }
-
-        .slide {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            background-position: center;
-            opacity: 0;
-            transition: opacity 2s ease-in-out;
-            animation: zoomIn 20s ease-in-out infinite alternate;
-        }
-
-        .slide.active {
-            opacity: 1;
-        }
-
-        @keyframes zoomIn {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.1); }
-        }
-
-        /* ===== BLUR OVERLAY ===== */
-        #blur-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            backdrop-filter: blur(20px) saturate(1.2);
-            -webkit-backdrop-filter: blur(20px) saturate(1.2);
-            background: rgba(0, 0, 0, 0.2);
-            transition: all 0.5s;
-            pointer-events: none;
-        }
-
-        /* ===== NOISE EFFECT ===== */
-        #noise {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 2;
-            pointer-events: none;
-            opacity: 0.04;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-            background-repeat: repeat;
-            background-size: 256px 256px;
-        }
-
-        /* ===== MAIN CONTENT ===== */
-        #content {
-            position: relative;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            padding: 40px 20px;
+        header {
             text-align: center;
+            margin-bottom: 30px;
         }
 
-        /* ===== GLASS CARD ===== */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(40px);
-            -webkit-backdrop-filter: blur(40px);
-            border-radius: 40px;
-            padding: 50px 60px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 30px 120px rgba(0, 0, 0, 0.5),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.05);
-            max-width: 600px;
-            width: 100%;
-            animation: fadeInUp 1s ease-out;
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, var(--accent-pink), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(255, 0, 80, 0.3);
+            margin-bottom: 10px;
+        }
+
+        /* Controls Area */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .upload-btn, .filter-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .upload-btn:hover, .filter-btn:hover, .filter-btn.active {
+            background: linear-gradient(45deg, var(--accent-pink), var(--accent-cyan));
+            border-color: transparent;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        /* Gallery Grid */
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            perspective: 1000px;
+        }
+
+        /* Photo Card & TikTok Effects */
+        .card {
             position: relative;
+            border-radius: 16px;
             overflow: hidden;
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease, box-shadow 0.5s ease;
+            cursor: pointer;
+            aspect-ratio: 4 / 5;
         }
 
-        .glass-card::before {
+        .card:hover {
+            transform: translateY(-10px) rotateX(5deg) rotateY(-5deg);
+            box-shadow: -5px 10px 25px rgba(0, 242, 254, 0.3), 
+                        5px -10px 25px rgba(255, 0, 80, 0.3);
+        }
+
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease, filter 0.3s ease;
+        }
+
+        .card:hover img {
+            transform: scale(1.08);
+        }
+
+        /* Shimmer Flash Effect */
+        .card::after {
             content: '';
             position: absolute;
             top: -50%;
             left: -50%;
             width: 200%;
             height: 200%;
-            background: conic-gradient(from 0deg, transparent, rgba(255, 255, 255, 0.03), transparent, rgba(255, 255, 255, 0.03), transparent);
-            animation: rotateBg 30s linear infinite;
+            background: linear-gradient(
+                60deg,
+                transparent 30%,
+                rgba(255, 255, 255, 0.25) 50%,
+                transparent 70%
+            );
+            transform: rotate(30deg) translateY(-100%);
+            transition: transform 0.8s ease;
         }
 
-        @keyframes rotateBg {
-            to { transform: rotate(360deg); }
+        .card:hover::after {
+            transform: rotate(30deg) translateY(100%);
         }
 
-        .glass-card > * {
-            position: relative;
-            z-index: 1;
-        }
+        /* Edit Styles (Filters) */
+        .filter-cyberpunk img { filter: contrast(120%) saturate(150%) hue-rotate(190deg); }
+        .filter-vintage img { filter: sepia(40%) contrast(110%) brightness(90%); }
+        .filter-dramatic img { filter: contrast(160%) grayscale(30%); }
 
-        @keyframes fadeInUp {
-            0% { opacity: 0; transform: translateY(40px) scale(0.95); }
-            100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        /* ===== LOGO / ICON ===== */
-        .logo-icon {
-            font-size: 72px;
-            margin-bottom: 10px;
-            animation: floatIcon 4s ease-in-out infinite;
-            display: inline-block;
-        }
-
-        @keyframes floatIcon {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-15px) rotate(5deg); }
-        }
-
-        /* ===== TIME ===== */
-        .time {
-            font-size: 82px;
-            font-weight: 900;
-            letter-spacing: 4px;
-            background: linear-gradient(135deg, #ffffff 0%, #a8c0ff 50%, #3f2b96 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: none;
-            font-variant-numeric: tabular-nums;
-            line-height: 1;
-            margin-bottom: 5px;
-        }
-
-        .time-seconds {
-            font-size: 28px;
-            font-weight: 300;
-            color: rgba(255, 255, 255, 0.4);
-            -webkit-text-fill-color: rgba(255, 255, 255, 0.4);
-            margin-left: 5px;
-        }
-
-        .date {
-            font-size: 20px;
-            color: rgba(255, 255, 255, 0.6);
-            letter-spacing: 2px;
-            margin-bottom: 20px;
-            font-weight: 300;
-        }
-
-        /* ===== GREETING ===== */
-        .greeting {
-            font-size: 28px;
-            font-weight: 600;
-            margin-bottom: 5px;
-            background: linear-gradient(90deg, #f7971e, #ffd200);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .greeting-sub {
-            font-size: 16px;
-            color: rgba(255, 255, 255, 0.4);
-            font-weight: 300;
-            margin-bottom: 25px;
-        }
-
-        /* ===== WEATHER ===== */
-        .weather-mini {
-            display: flex;
-            align-items: center;
+        /* Fullscreen Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
             justify-content: center;
-            gap: 15px;
-            padding: 12px 25px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 50px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            margin-bottom: 25px;
-            font-size: 18px;
-        }
-
-        .weather-mini .temp {
-            font-weight: 700;
-            font-size: 24px;
-        }
-
-        .weather-mini .desc {
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        /* ===== QUOTE ===== */
-        .quote {
-            font-size: 18px;
-            font-style: italic;
-            color: rgba(255, 255, 255, 0.5);
-            padding: 15px 0;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-
-        .quote-author {
-            display: block;
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.3);
-            font-style: normal;
-            margin-top: 5px;
-            font-weight: 300;
-        }
-
-        /* ===== CONTROLS ===== */
-        .controls {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-top: 5px;
-        }
-
-        .controls button {
-            padding: 10px 22px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 50px;
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            color: rgba(255, 255, 255, 0.7);
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
-            font-family: inherit;
-            display: flex;
             align-items: center;
-            gap: 8px;
+            backdrop-filter: blur(15px);
         }
 
-        .controls button:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-
-        .controls button.active {
-            background: rgba(255, 215, 0, 0.15);
-            border-color: rgba(255, 215, 0, 0.3);
-            color: #ffd700;
-        }
-
-        .controls button .badge {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        /* ===== WALLPAPER INDICATOR ===== */
-        .wallpaper-indicator {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 20;
+        .modal.active {
             display: flex;
-            gap: 10px;
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(20px);
-            padding: 12px 20px;
-            border-radius: 50px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .wallpaper-indicator .dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.15);
-            cursor: pointer;
-            transition: all 0.3s;
-            border: none;
-            padding: 0;
+        .modal img {
+            max-width: 90%;
+            max-height: 85vh;
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(0, 242, 254, 0.5);
+            animation: zoomIn 0.3s ease;
         }
 
-        .wallpaper-indicator .dot.active {
-            background: #ffd700;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
-            width: 30px;
-            border-radius: 10px;
-        }
-
-        .wallpaper-indicator .dot:hover {
-            transform: scale(1.2);
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .wallpaper-indicator .dot.active:hover {
-            background: #ffd700;
-            transform: scale(1.1);
-        }
-
-        /* ===== WALLPAPER NAME ===== */
-        .wallpaper-name {
-            position: fixed;
-            bottom: 85px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 20;
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.3);
-            letter-spacing: 2px;
-            font-weight: 300;
-            background: rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(10px);
-            padding: 6px 18px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.03);
-            opacity: 0;
-            transition: opacity 0.5s;
-        }
-
-        .wallpaper-name.show {
-            opacity: 1;
-        }
-
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 768px) {
-            .glass-card {
-                padding: 35px 30px;
-                border-radius: 30px;
-            }
-
-            .time {
-                font-size: 56px;
-            }
-
-            .time-seconds {
-                font-size: 20px;
-            }
-
-            .date {
-                font-size: 16px;
-            }
-
-            .greeting {
-                font-size: 22px;
-            }
-
-            .logo-icon {
-                font-size: 56px;
-            }
-
-            .weather-mini {
-                font-size: 15px;
-                padding: 10px 18px;
-            }
-
-            .weather-mini .temp {
-                font-size: 20px;
-            }
-
-            .quote {
-                font-size: 15px;
-            }
-
-            .controls button {
-                padding: 8px 16px;
-                font-size: 12px;
-            }
-
-            .wallpaper-indicator {
-                padding: 10px 16px;
-                gap: 8px;
-                bottom: 20px;
-            }
-
-            .wallpaper-indicator .dot {
-                width: 8px;
-                height: 8px;
-            }
-
-            .wallpaper-indicator .dot.active {
-                width: 24px;
-            }
-
-            .wallpaper-name {
-                bottom: 70px;
-                font-size: 11px;
-                padding: 4px 14px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .glass-card {
-                padding: 25px 18px;
-                border-radius: 24px;
-            }
-
-            .time {
-                font-size: 40px;
-            }
-
-            .time-seconds {
-                font-size: 16px;
-            }
-
-            .logo-icon {
-                font-size: 44px;
-            }
-
-            .greeting {
-                font-size: 18px;
-            }
-
-            .controls {
-                gap: 8px;
-            }
-
-            .controls button {
-                padding: 6px 14px;
-                font-size: 11px;
-            }
-        }
-
-        /* ===== KEYBOARD SHORTCUT HINT ===== */
-        .shortcut-hint {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 30;
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.15);
-            letter-spacing: 1px;
-            text-align: right;
-            line-height: 1.8;
-            pointer-events: none;
-            font-weight: 300;
-        }
-
-        .shortcut-hint span {
-            display: block;
-        }
-
-        @media (max-width: 768px) {
-            .shortcut-hint {
-                display: none;
-            }
+        @keyframes zoomIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
     </style>
 </head>
 <body>
 
-    <!-- ===== SLIDESHOW ===== -->
-    <div id="slideshow">
-        <!-- 20 Wallpapers động đẹp -->
-        <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1470071459604-7b40ec9e5b4c?w=1920&q=80');" data-name="🌿 Rừng xanh mờ ảo"></div>
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80');" data-name="🏖️ Biển hoàng hôn"></div>
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80');" data-name="🌌 Dải Ngân Hà"></div>
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1920&q=80');" data-name="🏔️ Núi tuyết hùng vĩ"></div>
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=1920&q=80');" data-name="🌅 Bình minh trên hồ"></div>
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&q=80');" data-name="🌲 Rừng mùa thu"></div>
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1920&q=80');" data-name="🏞️ Thác nước hùng vĩ"></div>
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&q=80');" data-name="🌳 Rừng thông sương mù"></div>
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=80');" data-name="⛰️ Dãy núi hùng vĩ"></div>
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1920&q=80');" data-name="🏙️ Phố đêm lung linh"></div>
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80');" data-name="🌊 Bãi biển nhiệt đới"></div>
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1504608524840-2f2b731ddfc7?w=1920&q=80');" data-name="⛅ Bầu trời mây"></div>
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1470071459604-7b40ec9e5b4c?w=1920&q=80');" data-name="🌿 Thiên nhiên bí ẩn"></div>
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1510784722466-f2aa9c52fff6?w=1920&q=80');" data-name="🌌 Vũ trụ bao la"></div>
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1920&q=80');" data-name="🏔️ Tuyết phủ trắng xóa"></div>
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=1920&q=80');" data-name="🌅 Bình minh vàng"></div>
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920&q=80');" data-name="🌾 Cánh đồng hoa"></div>
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&q=80');" data-name="🌲 Rừng sâu thẳm"></div>
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=80');" data-name="⛰️ Núi non hùng tráng"></div>
-        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1920&q=80');" data-name="🌃 Thành phố về đêm"></div>
+    <header>
+        <h1>TIKTOK EDIT GALLERY</h1>
+        <p>Lưu giữ khoảnh khắc với hiệu ứng đỉnh cao</p>
+    </header>
+
+    <div class="controls">
+        <label for="file-input" class="upload-btn">+ Thêm ảnh mới</label>
+        <input type="file" id="file-input" accept="image/*" multiple>
+        
+        <button class="filter-btn active" onclick="applyGlobalFilter('normal')">Gốc</button>
+        <button class="filter-btn" onclick="applyGlobalFilter('cyberpunk')">Cyberpunk</button>
+        <button class="filter-btn" onclick="applyGlobalFilter('vintage')">Vintage</button>
+        <button class="filter-btn" onclick="applyGlobalFilter('dramatic')">Dramatic</button>
     </div>
 
-    <!-- ===== BLUR OVERLAY ===== -->
-    <div id="blur-overlay"></div>
+    <main class="gallery" id="gallery"></main>
 
-    <!-- ===== NOISE ===== -->
-    <div id="noise"></div>
-
-    <!-- ===== SHORTCUT HINT ===== -->
-    <div class="shortcut-hint">
-        <span>← → Chuyển wallpaper</span>
-        <span>Space Dừng/tự động</span>
-        <span>F Fullscreen</span>
-    </div>
-
-    <!-- ===== WALLPAPER NAME ===== -->
-    <div class="wallpaper-name" id="wallpaperName">🌿 Rừng xanh mờ ảo</div>
-
-    <!-- ===== WALLPAPER INDICATOR ===== -->
-    <div class="wallpaper-indicator" id="indicator"></div>
-
-    <!-- ===== MAIN CONTENT ===== -->
-    <div id="content">
-        <div class="glass-card">
-            <div class="logo-icon">✨</div>
-
-            <!-- Time -->
-            <div>
-                <span class="time" id="time">00:00</span>
-                <span class="time-seconds" id="seconds">00</span>
-            </div>
-            <div class="date" id="date">Thứ Hai, 01 Tháng 1, 2024</div>
-
-            <!-- Greeting -->
-            <div class="greeting" id="greeting">🌅 Chào buổi sáng!</div>
-            <div class="greeting-sub" id="greetingSub">Một ngày mới đầy cảm hứng</div>
-
-            <!-- Weather -->
-            <div class="weather-mini" id="weatherMini">
-                <span>🌤️</span>
-                <span class="temp" id="weatherTemp">26°C</span>
-                <span class="desc" id="weatherDesc">Trời trong</span>
-                <span>•</span>
-                <span>💨 <span id="weatherWind">12 km/h</span></span>
-            </div>
-
-            <!-- Quote -->
-            <div class="quote" id="quote">
-                "Hãy sống như ngày mai không tồn tại"
-                <span class="quote-author">— Seneca</span>
-            </div>
-
-            <!-- Controls -->
-            <div class="controls">
-                <button id="prevBtn" title="Trước đó">⏮️ Trước</button>
-                <button id="autoBtn" class="active" title="Tự động chạy">▶️ Tự động</button>
-                <button id="nextBtn" title="Tiếp theo">Tiếp ⏭️</button>
-                <button id="fullscreenBtn" title="Toàn màn hình">⛶ Full</button>
-                <button id="blurToggleBtn" title="Bật/tắt Blur">🌫️ Blur</button>
-            </div>
-        </div>
+    <div class="modal" id="modal" onclick="closeModal()">
+        <img id="modal-img" src="" alt="Preview">
     </div>
 
     <script>
-        // ============================================================
-        // 1. SLIDESHOW ENGINE
-        // ============================================================
-        const slides = document.querySelectorAll('.slide');
-        let currentSlide = 0;
-        let isAuto = true;
-        let autoInterval = null;
-        const AUTO_DELAY = 6000;
+        const gallery = document.getElementById('gallery');
+        const fileInput = document.getElementById('file-input');
+        const modal = document.getElementById('modal');
+        const modalImg = document.getElementById('modal-img');
 
-        function showSlide(index) {
-            slides.forEach((slide, i) => {
-                slide.classList.toggle('active', i === index);
-            });
-
-            // Update wallpaper name
-            const name = slides[index].dataset.name || 'Cảnh đẹp';
-            const nameEl = document.getElementById('wallpaperName');
-            nameEl.textContent = name;
-            nameEl.classList.add('show');
-            clearTimeout(nameEl._hideTimeout);
-            nameEl._hideTimeout = setTimeout(() => {
-                nameEl.classList.remove('show');
-            }, 2000);
-
-            // Update indicator
-            document.querySelectorAll('.dot').forEach((dot, i) => {
-                dot.classList.toggle('active', i === index);
-            });
-
-            currentSlide = index;
-        }
-
-        function nextSlide() {
-            const next = (currentSlide + 1) % slides.length;
-            showSlide(next);
-        }
-
-        function prevSlide() {
-            const prev = (currentSlide - 1 + slides.length) % slides.length;
-            showSlide(prev);
-        }
-
-        function startAuto() {
-            if (autoInterval) clearInterval(autoInterval);
-            autoInterval = setInterval(nextSlide, AUTO_DELAY);
-            document.getElementById('autoBtn').textContent = '⏸️ Tự động';
-            document.getElementById('autoBtn').classList.add('active');
-            isAuto = true;
-        }
-
-        function stopAuto() {
-            if (autoInterval) {
-                clearInterval(autoInterval);
-                autoInterval = null;
-            }
-            document.getElementById('autoBtn').textContent = '▶️ Tự động';
-            document.getElementById('autoBtn').classList.remove('active');
-            isAuto = false;
-        }
-
-        function toggleAuto() {
-            if (isAuto) {
-                stopAuto();
-            } else {
-                startAuto();
-            }
-        }
-
-        // ============================================================
-        // 2. INDICATOR DOTS
-        // ============================================================
-        function createIndicators() {
-            const container = document.getElementById('indicator');
-            slides.forEach((_, i) => {
-                const dot = document.createElement('button');
-                dot.className = 'dot' + (i === 0 ? ' active' : '');
-                dot.setAttribute('data-index', i);
-                dot.addEventListener('click', () => {
-                    if (isAuto) stopAuto();
-                    showSlide(i);
-                });
-                container.appendChild(dot);
-            });
-        }
-        createIndicators();
-
-        // ============================================================
-        // 3. CLOCK
-        // ============================================================
-        function updateClock() {
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-
-            document.getElementById('time').textContent = `${hours}:${minutes}`;
-            document.getElementById('seconds').textContent = seconds;
-
-            // Date
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('date').textContent = now.toLocaleDateString('vi-VN', options);
-
-            // Greeting
-            const hour = now.getHours();
-            let greeting = '🌙 Chúc bạn ngủ ngon!';
-            let sub = 'Giấc mơ đẹp nhé';
-            if (hour >= 5 && hour < 12) {
-                greeting = '🌅 Chào buổi sáng!';
-                sub = 'Một ngày mới đầy cảm hứng';
-            } else if (hour >= 12 && hour < 18) {
-                greeting = '☀️ Chào buổi chiều!';
-                sub = 'Tận hưởng khoảnh khắc bình yên';
-            } else if (hour >= 18 && hour < 22) {
-                greeting = '🌇 Chào buổi tối!';
-                sub = 'Thư giãn sau một ngày dài';
-            }
-            document.getElementById('greeting').textContent = greeting;
-            document.getElementById('greetingSub').textContent = sub;
-        }
-
-        updateClock();
-        setInterval(updateClock, 1000);
-
-        // ============================================================
-        // 4. WEATHER (Simulated)
-        // ============================================================
-        function updateWeather() {
-            const temps = [22, 24, 26, 28, 30, 23, 25, 27];
-            const descs = ['Trời trong', 'Có mây', 'Nắng nhẹ', 'Mát mẻ', 'Ấm áp', 'Se lạnh'];
-            const icons = ['☀️', '⛅', '🌤️', '🌥️', '☁️', '🌦️'];
-            const winds = [8, 12, 15, 10, 18, 14];
-
-            const temp = temps[Math.floor(Math.random() * temps.length)];
-            const desc = descs[Math.floor(Math.random() * descs.length)];
-            const icon = icons[Math.floor(Math.random() * icons.length)];
-            const wind = winds[Math.floor(Math.random() * winds.length)];
-
-            document.getElementById('weatherTemp').textContent = `${temp}°C`;
-            document.getElementById('weatherDesc').textContent = desc;
-            document.querySelector('.weather-mini .temp').previousElementSibling.textContent = icon;
-            document.getElementById('weatherWind').textContent = `${wind} km/h`;
-        }
-
-        updateWeather();
-        setInterval(updateWeather, 30000);
-
-        // ============================================================
-        // 5. QUOTES
-        // ============================================================
-        const quotes = [
-            { text: "Hãy sống như ngày mai không tồn tại", author: "Seneca" },
-            { text: "Điều duy nhất không đổi là sự thay đổi", author: "Heraclitus" },
-            { text: "Hạnh phúc không phải là đích đến, mà là hành trình", author: "Ralph Waldo Emerson" },
-            { text: "Cuộc sống là những gì xảy ra khi bạn đang bận làm kế hoạch khác", author: "John Lennon" },
-            { text: "Thành công không phải là chìa khóa của hạnh phúc. Hạnh phúc mới là chìa khóa của thành công", author: "Albert Schweitzer" },
-            { text: "Cách tốt nhất để dự đoán tương lai là tạo ra nó", author: "Peter Drucker" },
-            { text: "Đừng đếm ngày, hãy làm mỗi ngày đều đáng nhớ", author: "Muhammad Ali" },
-            { text: "Sống là cho đi, không chỉ nhận về", author: "Mother Teresa" },
-            { text: "Mọi giấc mơ đều bắt đầu từ một người dám thử", author: "Unknown" },
-            { text: "Bạn không bao giờ quá già để đặt ra mục tiêu mới", author: "C.S. Lewis" }
+        // Mẫu ảnh ban đầu
+        const sampleImages = [
+            'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600',
+            'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600',
+            'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600'
         ];
 
-        function updateQuote() {
-            const quote = quotes[Math.floor(Math.random() * quotes.length)];
-            document.getElementById('quote').innerHTML = `"${quote.text}" <span class="quote-author">— ${quote.author}</span>`;
+        function createCard(src) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `<img src="${src}" alt="Photo">`;
+            
+            card.addEventListener('click', () => {
+                modalImg.src = src;
+                modal.classList.add('active');
+            });
+
+            return card;
         }
 
-        updateQuote();
-        setInterval(updateQuote, 15000);
+        // Tải ảnh mặc định
+        sampleImages.forEach(src => gallery.appendChild(createCard(src)));
 
-        // ============================================================
-        // 6. CONTROLS
-        // ============================================================
-        document.getElementById('prevBtn').addEventListener('click', () => {
-            if (isAuto) stopAuto();
-            prevSlide();
+        // Tải ảnh từ máy
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    gallery.prepend(createCard(event.target.result));
+                };
+                reader.readAsDataURL(file);
+            });
         });
 
-        document.getElementById('nextBtn').addEventListener('click', () => {
-            if (isAuto) stopAuto();
-            nextSlide();
-        });
+        // Áp dụng bộ lọc màu Style TikTok
+        function applyGlobalFilter(filterName) {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
 
-        document.getElementById('autoBtn').addEventListener('click', toggleAuto);
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.classList.remove('filter-cyberpunk', 'filter-vintage', 'filter-dramatic');
+                if (filterName !== 'normal') {
+                    card.classList.add(`filter-${filterName}`);
+                }
+            });
+        }
 
-        document.getElementById('fullscreenBtn').addEventListener('click', () => {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else {
-                document.exitFullscreen();
-            }
-        });
-
-        document.getElementById('blurToggleBtn').addEventListener('click', function() {
-            const overlay = document.getElementById('blur-overlay');
-            const currentBlur = getComputedStyle(overlay).backdropFilter;
-            if (currentBlur.includes('blur(20px)')) {
-                overlay.style.backdropFilter = 'blur(0px) saturate(1)';
-                overlay.style.background = 'rgba(0,0,0,0.05)';
-                this.textContent = '🌫️ Blur OFF';
-                this.classList.remove('active');
-            } else {
-                overlay.style.backdropFilter = 'blur(20px) saturate(1.2)';
-                overlay.style.background = 'rgba(0,0,0,0.2)';
-                this.textContent = '🌫️ Blur';
-                this.classList.add('active');
-            }
-        });
-        document.getElementById('blurToggleBtn').classList.add('active');
-
-        // ============================================================
-        // 7. KEYBOARD SHORTCUTS
-        // ============================================================
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft') {
-                if (isAuto) stopAuto();
-                prevSlide();
-                e.preventDefault();
-            } else if (e.key === 'ArrowRight') {
-                if (isAuto) stopAuto();
-                nextSlide();
-                e.preventDefault();
-            } else if (e.key === ' ' || e.key === 'Space') {
-                toggleAuto();
-                e.preventDefault();
-            } else if (e.key === 'f' || e.key === 'F') {
-                document.getElementById('fullscreenBtn').click();
-                e.preventDefault();
-            } else if (e.key === 'b' || e.key === 'B') {
-                document.getElementById('blurToggleBtn').click();
-                e.preventDefault();
-            }
-        });
-
-        // ============================================================
-        // 8. START AUTO
-        // ============================================================
-        startAuto();
-
-        // Show first wallpaper name
-        setTimeout(() => {
-            document.getElementById('wallpaperName').classList.add('show');
-            setTimeout(() => {
-                document.getElementById('wallpaperName').classList.remove('show');
-            }, 2000);
-        }, 500);
-
-        console.log('✨ DreamScape loaded!');
-        console.log('⌨️ ← → Chuyển wallpaper');
-        console.log('⌨️ Space Dừng/tự động');
-        console.log('⌨️ F Fullscreen');
-        console.log('⌨️ B Bật/tắt Blur');
+        function closeModal() {
+            modal.classList.remove('active');
+        }
     </script>
-
 </body>
 </html>
