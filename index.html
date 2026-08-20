@@ -1,365 +1,87 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TikTok Video Style Photo Reel</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background-color: #000;
-            color: #fff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Khung TikTok Player 9:16 */
-        .tiktok-player {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            max-width: 420px;
-            max-height: 880px;
-            background: #111;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 0 30px rgba(0, 242, 254, 0.2), 0 0 30px rgba(255, 0, 80, 0.2);
-        }
-
-        /* Container ảnh slider */
-        .slide-container {
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
-
-        .slide {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            transition: opacity 0.8s ease-in-out;
-            overflow: hidden;
-        }
-
-        .slide.active {
-            opacity: 1;
-        }
-
-        /* Hiệu ứng Ken Burns (Thu phóng điện ảnh như Video Edit) */
-        .slide img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transform: scale(1);
-            transition: transform 4s ease-out;
-        }
-
-        .slide.active img {
-            animation: kenburns 4.5s ease-out infinite alternate;
-        }
-
-        @keyframes kenburns {
-            0% { transform: scale(1) translate(0, 0); }
-            100% { transform: scale(1.25) translate(-15px, -10px); }
-        }
-
-        /* Hiệu ứng Flash chuyển cảnh video */
-        .flash-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: white;
-            opacity: 0;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        .flash-active {
-            animation: flashAnim 0.4s ease-out;
-        }
-
-        @keyframes flashAnim {
-            0% { opacity: 0.8; }
-            100% { opacity: 0; }
-        }
-
-        /* Thanh tiến trình Video (Progress bar) */
-        .progress-bar-container {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            height: 3px;
-            display: flex;
-            gap: 5px;
-            z-index: 20;
-        }
-
-        .progress-segment {
-            flex: 1;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            width: 0%;
-            background: #fff;
-        }
-
-        .progress-fill.active {
-            animation: fillProgress 4s linear forwards;
-        }
-
-        @keyframes fillProgress {
-            from { width: 0%; }
-            to { width: 100%; }
-        }
-
-        /* UI Nút tương tác bên phải (TikTok Style) */
-        .sidebar {
-            position: absolute;
-            right: 15px;
-            bottom: 100px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            align-items: center;
-            z-index: 20;
-        }
-
-        .action-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            text-shadow: 0 2px 5px rgba(0,0,0,0.5);
-        }
-
-        .action-btn span {
-            font-size: 12px;
-        }
-
-        .heart-icon {
-            color: #ff0050;
-            animation: heartPulse 1.5s infinite;
-        }
-
-        @keyframes heartPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-        }
-
-        /* Đĩa nhạc quay tròn */
-        .disc-wrapper {
-            position: absolute;
-            right: 15px;
-            bottom: 30px;
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: #222;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border: 8px solid #111;
-            animation: spin 3s linear infinite;
-            z-index: 20;
-        }
-
-        .disc-wrapper img {
-            width: 25px;
-            height: 25px;
-            border-radius: 50%;
-        }
-
-        @keyframes spin {
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Overlay Thông tin bài viết */
-        .bottom-info {
-            position: absolute;
-            bottom: 30px;
-            left: 15px;
-            right: 80px;
-            z-index: 20;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.8);
-        }
-
-        .username {
-            font-weight: bold;
-            font-size: 16px;
-            margin-bottom: 6px;
-        }
-
-        .caption {
-            font-size: 14px;
-            opacity: 0.9;
-            line-height: 1.3;
-        }
-
-        /* Controls */
-        .play-pause-btn {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.5);
-            border: none;
-            color: white;
-            font-size: 40px;
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: none;
-            z-index: 30;
-        }
-    </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🏦 Ngân Hàng Tình Yêu - Dành Cho Em</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Quicksand:wght@300;400;600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
+    <!-- Background animation -->
+    <div class="bg-hearts"></div>
 
-    <div class="tiktok-player" id="player">
-        <div class="flash-overlay" id="flash"></div>
+    <div class="container">
+        <!-- Header -->
+        <header class="bank-header">
+            <div class="logo">🏦</div>
+            <h1 class="bank-name">Ngân Hàng Tình Yêu</h1>
+            <p class="slogan">"Nơi gửi gắm con tim"</p>
+        </header>
 
-        <!-- Thanh đếm thời gian chuyển slide -->
-        <div class="progress-bar-container" id="progressBar"></div>
+        <!-- Main Card -->
+        <div class="love-card" id="loveCard">
+            <div class="card-content">
+                <div class="avatar">
+                    <span class="emoji-big">💕</span>
+                </div>
+                <h2 class="greeting" id="greetingText">Gửi đến người con yêu thương nhất</h2>
+                <p class="message" id="messageText">
+                    Anh đã mở một tài khoản đặc biệt tại ngân hàng này,
+                    <br />và chỉ có <strong>EM</strong> mới có quyền rút tiền...
+                </p>
 
-        <!-- Ảnh Slide -->
-        <div class="slide-container" id="slideContainer"></div>
+                <!-- Account Info -->
+                <div class="account-info">
+                    <div class="balance">
+                        <span class="label">Số dư tình cảm</span>
+                        <span class="amount" id="balanceAmount">❤️ 1.000.000.000</span>
+                    </div>
+                    <div class="account-number">
+                        <span class="label">Số tài khoản</span>
+                        <span class="number" id="accountNumber">LOVE - 14082026</span>
+                    </div>
+                </div>
 
-        <!-- Nút Play/Pause khi bấm vào giữa màn hình -->
-        <button class="play-pause-btn" id="playBtn">▶</button>
+                <!-- Action Buttons -->
+                <div class="actions">
+                    <button class="btn btn-primary" id="btnDeposit">
+                        💝 Gửi thêm yêu thương
+                    </button>
+                    <button class="btn btn-secondary" id="btnWithdraw">
+                        💖 Rút trái tim
+                    </button>
+                    <button class="btn btn-special" id="btnSurprise">
+                        🎁 Quà bất ngờ
+                    </button>
+                </div>
 
-        <!-- Sidebar thả tim & chia sẻ -->
-        <div class="sidebar">
-            <button class="action-btn">
-                <span class="heart-icon">❤️</span>
-                <span>124.5K</span>
-            </button>
-            <button class="action-btn">💬 <span>1,820</span></button>
-            <button class="action-btn">🔗 <span>Chia sẻ</span></button>
+                <!-- Love Letter -->
+                <div class="love-letter" id="loveLetter" style="display: none">
+                    <div class="letter-content">
+                        <h3>💌 Thư tình</h3>
+                        <p id="letterText">
+                            Em yêu quý!<br /><br />
+                            Anh viết những dòng này từ sâu thẳm trái tim...
+                            Mỗi ngày trôi qua, anh lại càng thêm yêu em.
+                            Em là ánh sáng, là niềm vui, là tất cả cuộc đời anh.
+                            <br /><br />
+                            <span class="signature">— Người luôn yêu em —</span>
+                        </p>
+                        <button class="btn-close-letter" id="closeLetter">✖</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Đĩa nhạc TikTok quay -->
-        <div class="disc-wrapper">
-            <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100" alt="Music Disc">
-        </div>
-
-        <!-- Tiêu đề & Nhạc -->
-        <div class="bottom-info">
-            <div class="username">@my_photo_reels</div>
-            <div class="caption">Bộ sưu tập ảnh phong cách TikTok Edit 🔥 #cinematic #reels</div>
-        </div>
+        <!-- Footer -->
+        <footer>
+            <p>Made with ❤️ dành tặng người anh yêu nhất</p>
+            <p class="footer-note">© 2026 Ngân Hàng Tình Yêu</p>
+        </footer>
     </div>
 
-    <script>
-        const photos = [
-            'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800',
-            'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800',
-            'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800',
-            'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800'
-        ];
-
-        const slideContainer = document.getElementById('slideContainer');
-        const progressBar = document.getElementById('progressBar');
-        const flash = document.getElementById('flash');
-        const player = document.getElementById('player');
-        const playBtn = document.getElementById('playBtn');
-
-        let currentIndex = 0;
-        let isPlaying = true;
-        let timer = null;
-
-        // Khởi tạo Slides & Progress Bars
-        photos.forEach((src, index) => {
-            // Slide Image
-            const slide = document.createElement('div');
-            slide.className = `slide ${index === 0 ? 'active' : ''}`;
-            slide.innerHTML = `<img src="${src}" alt="Slide">`;
-            slideContainer.appendChild(slide);
-
-            // Progress Segment
-            const segment = document.createElement('div');
-            segment.className = 'progress-segment';
-            segment.innerHTML = `<div class="progress-fill ${index === 0 ? 'active' : ''}"></div>`;
-            progressBar.appendChild(segment);
-        });
-
-        const slides = document.querySelectorAll('.slide');
-        const fills = document.querySelectorAll('.progress-fill');
-
-        function triggerFlash() {
-            flash.classList.remove('flash-active');
-            void flash.offsetWidth; // Trigger reflow
-            flash.classList.add('flash-active');
-        }
-
-        function nextSlide() {
-            slides[currentIndex].classList.remove('active');
-            fills[currentIndex].classList.remove('active');
-            fills[currentIndex].style.width = '100%';
-
-            currentIndex = (currentIndex + 1) % photos.length;
-
-            if (currentIndex === 0) {
-                fills.forEach(f => { f.style.width = '0%'; f.classList.remove('active'); });
-            }
-
-            slides[currentIndex].classList.add('active');
-            fills[currentIndex].classList.add('active');
-            
-            // Kích hoạt chớp sáng chuyển bài (TikTok edit effect)
-            triggerFlash();
-        }
-
-        function startSlideshow() {
-            timer = setInterval(nextSlide, 4000);
-        }
-
-        function stopSlideshow() {
-            clearInterval(timer);
-        }
-
-        // Click vào màn hình để Tạm dừng / Tiếp tục phát
-        player.addEventListener('click', (e) => {
-            if (e.target.closest('.sidebar')) return;
-
-            isPlaying = !isPlaying;
-            if (isPlaying) {
-                startSlideshow();
-                fills[currentIndex].style.animationPlayState = 'running';
-                playBtn.style.display = 'none';
-            } else {
-                stopSlideshow();
-                fills[currentIndex].style.animationPlayState = 'paused';
-                playBtn.style.display = 'block';
-            }
-        });
-
-        startSlideshow();
-    </script>
+    <!-- Script -->
+    <script src="js/script.js"></script>
 </body>
 </html>
