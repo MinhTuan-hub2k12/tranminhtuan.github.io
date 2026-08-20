@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🐒 BỊ LỪA RỒI! - Tự động phát nhạc</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS Animation Nâng Cao</title>
     <style>
+        /* ===== RESET & BASE ===== */
         * {
             margin: 0;
             padding: 0;
@@ -12,378 +13,491 @@
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0c0c1d 0%, #1a1a3e 50%, #0c0c1d 100%);
             min-height: 100vh;
-            background: linear-gradient(135deg, #0a0a0f 0%, #1a0a0a 50%, #0a0a0f 100%);
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .bg-effect {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 0;
-            background: 
-                radial-gradient(ellipse at 20% 50%, rgba(200, 50, 50, 0.08) 0%, transparent 60%),
-                radial-gradient(ellipse at 80% 50%, rgba(200, 50, 50, 0.08) 0%, transparent 60%);
+            padding: 40px 20px;
+            overflow-x: hidden;
         }
 
         .container {
-            position: relative;
-            z-index: 10;
-            max-width: 480px;
+            max-width: 1200px;
             width: 100%;
-            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 40px;
+            padding: 20px;
         }
 
+        /* ===== CARD CHUNG ===== */
         .card {
-            background: rgba(20, 10, 10, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 2.5rem;
-            padding: 2.5rem 2rem 2.8rem;
-            border: 1px solid rgba(255, 50, 50, 0.15);
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 50, 50, 0.05);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 30px 20px 40px;
             text-align: center;
-            animation: fadeIn 0.8s ease forwards;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .title {
-            font-size: 2.2rem;
-            font-weight: 900;
-            color: #ff4444;
-            text-shadow: 0 0 30px rgba(255, 50, 50, 0.3);
-            margin-bottom: 0.3rem;
-            letter-spacing: 2px;
-        }
-        .title .emoji {
-            font-size: 2.8rem;
-        }
-
-        .subtitle {
-            color: #888;
-            font-size: 0.9rem;
-            margin-bottom: 1.8rem;
-            letter-spacing: 1px;
-        }
-
-        .image-wrapper {
-            margin: 0 auto 1.5rem;
-            border-radius: 1.8rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
             overflow: hidden;
-            border: 3px solid rgba(255, 50, 50, 0.2);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-            max-width: 320px;
-            aspect-ratio: 1/1;
-            transition: 0.3s;
         }
-        .image-wrapper img {
+
+        .card:hover {
+            transform: translateY(-10px) scale(1.02);
+        }
+
+        .card h3 {
+            color: #fff;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 25px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, #f7971e, #ffd200);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(255, 215, 0, 0.03), transparent, rgba(255, 215, 0, 0.03), transparent);
+            animation: rotateBg 10s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes rotateBg {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ===== 1. FLOATING ORB ===== */
+        .orb {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #ee5a24);
+            box-shadow: 0 0 60px rgba(238, 90, 36, 0.4);
+            animation: floatOrb 3s ease-in-out infinite;
+            position: relative;
+        }
+
+        .orb::after {
+            content: '';
+            position: absolute;
+            top: 10%;
+            left: 20%;
+            width: 30%;
+            height: 20%;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            filter: blur(8px);
+        }
+
+        @keyframes floatOrb {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-30px) scale(1.05); }
+        }
+
+        /* ===== 2. SPINNING GALAXY ===== */
+        .galaxy {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+
+        .galaxy .ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            animation: spinRing 4s linear infinite;
+        }
+
+        .galaxy .ring:nth-child(1) {
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            display: block;
+            border-top: 3px solid #f7971e;
+            border-right: 3px solid #ffd200;
+            animation-duration: 3s;
         }
 
-        /* ===== CHỮ BAY ===== */
-        .flying-text {
-            position: fixed;
-            font-size: 3.5rem;
+        .galaxy .ring:nth-child(2) {
+            width: 80%;
+            height: 80%;
+            top: 10%;
+            left: 10%;
+            border-bottom: 3px solid #ff6b6b;
+            border-left: 3px solid #ee5a24;
+            animation-duration: 4s;
+            animation-direction: reverse;
+        }
+
+        .galaxy .ring:nth-child(3) {
+            width: 60%;
+            height: 60%;
+            top: 20%;
+            left: 20%;
+            border-top: 3px solid #a29bfe;
+            border-right: 3px solid #6c5ce7;
+            animation-duration: 2.5s;
+        }
+
+        .galaxy .dot {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: radial-gradient(circle, #fff, #f7971e);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 40px rgba(247, 151, 30, 0.6);
+        }
+
+        @keyframes spinRing {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ===== 3. PULSING HEART ===== */
+        .heart-container {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .heart {
+            font-size: 70px;
+            animation: pulseHeart 1.2s ease-in-out infinite;
+            display: inline-block;
+            filter: drop-shadow(0 0 30px rgba(255, 0, 0, 0.3));
+        }
+
+        @keyframes pulseHeart {
+            0%, 100% { transform: scale(1); }
+            14% { transform: scale(1.3); }
+            28% { transform: scale(1); }
+            42% { transform: scale(1.3); }
+            70% { transform: scale(1); }
+        }
+
+        /* ===== 4. NEON GLOW TEXT ===== */
+        .neon-text {
+            font-size: 32px;
             font-weight: 900;
-            color: #ff2222;
-            text-shadow: 0 0 20px rgba(255, 0, 0, 0.6), 0 0 60px rgba(255, 0, 0, 0.3), 3px 3px 0 #4d1a0e;
-            pointer-events: none;
-            z-index: 9999;
-            animation: flyAround 4.5s linear forwards;
-            white-space: nowrap;
+            color: #fff;
+            text-shadow: 0 0 10px #f7971e, 0 0 20px #f7971e, 0 0 40px #f7971e;
+            animation: neonPulse 1.8s ease-in-out infinite alternate;
             letter-spacing: 2px;
+            margin: 10px 0 15px;
         }
 
-        @keyframes flyAround {
-            0% {
-                opacity: 0;
-                transform: translate(0, 0) scale(0.2) rotate(0deg);
-            }
-            10% {
-                opacity: 1;
-                transform: translate(40px, -80px) scale(1.2) rotate(10deg);
-            }
-            25% {
-                transform: translate(-150px, 50px) scale(1) rotate(-15deg);
-            }
-            50% {
-                transform: translate(200px, -120px) scale(1.3) rotate(18deg);
-            }
-            75% {
-                transform: translate(-250px, 100px) scale(0.9) rotate(-25deg);
-            }
-            100% {
-                opacity: 0;
-                transform: translate(300px, -180px) scale(1.4) rotate(30deg);
-            }
+        @keyframes neonPulse {
+            0% { text-shadow: 0 0 10px #f7971e, 0 0 20px #f7971e, 0 0 40px #f7971e, 0 0 60px #ff6b6b; }
+            100% { text-shadow: 0 0 20px #ffd200, 0 0 40px #ffd200, 0 0 80px #ffd200, 0 0 120px #ff6b6b; }
         }
 
-        .overlay {
-            position: fixed;
+        /* ===== 5. MORPHING SHAPE ===== */
+        .morph {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+            border-radius: 50%;
+            animation: morphShape 4s ease-in-out infinite;
+            box-shadow: 0 0 60px rgba(108, 92, 231, 0.4);
+        }
+
+        @keyframes morphShape {
+            0%, 100% { border-radius: 50%; transform: rotate(0deg); }
+            25% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; transform: rotate(90deg); }
+            50% { border-radius: 30% 30% 70% 70% / 70% 30% 70% 30%; transform: rotate(180deg); }
+            75% { border-radius: 70% 30% 30% 70% / 30% 70% 70% 30%; transform: rotate(270deg); }
+        }
+
+        /* ===== 6. BOUNCE + ROTATE ===== */
+        .bounce-rotate {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #fd79a8, #e84393);
+            border-radius: 20px;
+            animation: bounceRotate 2s ease-in-out infinite;
+            box-shadow: 0 0 50px rgba(232, 67, 147, 0.3);
+        }
+
+        @keyframes bounceRotate {
+            0%, 100% { transform: translateY(0) rotate(0deg) scale(1); border-radius: 20px; }
+            25% { transform: translateY(-40px) rotate(90deg) scale(1.1); border-radius: 50%; }
+            50% { transform: translateY(0) rotate(180deg) scale(1); border-radius: 20px; }
+            75% { transform: translateY(-20px) rotate(270deg) scale(0.9); border-radius: 10px 40px; }
+        }
+
+        /* ===== 7. WAVE TEXT ===== */
+        .wave-text {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            font-size: 36px;
+            font-weight: 900;
+            color: #fff;
+            margin: 10px 0 15px;
+        }
+
+        .wave-text span {
+            display: inline-block;
+            animation: waveLetter 1.5s ease-in-out infinite;
+            animation-delay: calc(var(--i) * 0.1s);
+            background: linear-gradient(180deg, #f7971e, #ffd200);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        @keyframes waveLetter {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        /* ===== 8. PARTICLE BURST ===== */
+        .particle-container {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            animation: burst 3s ease-out infinite;
+        }
+
+        .particle:nth-child(1) { background: #f7971e; animation-delay: 0s; }
+        .particle:nth-child(2) { background: #ff6b6b; animation-delay: 0.3s; }
+        .particle:nth-child(3) { background: #a29bfe; animation-delay: 0.6s; }
+        .particle:nth-child(4) { background: #ffd200; animation-delay: 0.9s; }
+        .particle:nth-child(5) { background: #fd79a8; animation-delay: 1.2s; }
+        .particle:nth-child(6) { background: #6c5ce7; animation-delay: 1.5s; }
+        .particle:nth-child(7) { background: #00b894; animation-delay: 1.8s; }
+        .particle:nth-child(8) { background: #fdcb6e; animation-delay: 2.1s; }
+
+        @keyframes burst {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            50% { opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        .particle:nth-child(1) { --tx: -60px; --ty: -60px; }
+        .particle:nth-child(2) { --tx: 60px; --ty: -60px; }
+        .particle:nth-child(3) { --tx: -60px; --ty: 60px; }
+        .particle:nth-child(4) { --tx: 60px; --ty: 60px; }
+        .particle:nth-child(5) { --tx: 0px; --ty: -80px; }
+        .particle:nth-child(6) { --tx: 0px; --ty: 80px; }
+        .particle:nth-child(7) { --tx: -80px; --ty: 0px; }
+        .particle:nth-child(8) { --tx: 80px; --ty: 0px; }
+
+        /* ===== 9. GLITCH EFFECT ===== */
+        .glitch {
+            font-size: 36px;
+            font-weight: 900;
+            color: #fff;
+            position: relative;
+            display: inline-block;
+            margin: 10px 0 15px;
+            letter-spacing: 3px;
+        }
+
+        .glitch::before,
+        .glitch::after {
+            content: 'GLITCH';
+            position: absolute;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 9997;
-            pointer-events: none;
-            backdrop-filter: blur(4px);
+            width: 100%;
+            height: 100%;
+            opacity: 0.8;
         }
 
-        .sound-icon {
-            display: inline-block;
-            margin-left: 8px;
-            animation: soundPulse 0.8s ease-in-out infinite;
-        }
-        @keyframes soundPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.2); }
+        .glitch::before {
+            color: #ff6b6b;
+            animation: glitch1 2s infinite;
+            clip-path: inset(30% 0 60% 0);
         }
 
-        /* Nút bấm vẫn giữ lại để dùng nếu muốn */
-        .btn {
-            padding: 0.9rem 2.5rem;
-            border: none;
-            border-radius: 60px;
-            font-weight: 700;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: 0.2s;
-            background: linear-gradient(135deg, #cc3333, #ff4444);
-            color: white;
-            box-shadow: 0 4px 25px rgba(255, 50, 50, 0.3);
-            letter-spacing: 1px;
-            margin-top: 0.5rem;
-        }
-        .btn:hover {
-            transform: scale(1.03);
-            box-shadow: 0 8px 35px rgba(255, 50, 50, 0.4);
-        }
-        .btn:active {
-            transform: scale(0.96);
-        }
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
+        .glitch::after {
+            color: #6c5ce7;
+            animation: glitch2 2.5s infinite;
+            clip-path: inset(60% 0 10% 0);
         }
 
-        @media (max-width: 500px) {
+        @keyframes glitch1 {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-3px, 2px); }
+            40% { transform: translate(3px, -2px); }
+            60% { transform: translate(-2px, 3px); }
+            80% { transform: translate(2px, -3px); }
+        }
+
+        @keyframes glitch2 {
+            0%, 100% { transform: translate(0); }
+            25% { transform: translate(4px, -4px); }
+            50% { transform: translate(-4px, 4px); }
+            75% { transform: translate(2px, -2px); }
+        }
+
+        /* ===== 10. SLIDE + FADE ===== */
+        .slide-fade {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            border-radius: 16px;
+            animation: slideFade 3s ease-in-out infinite;
+            box-shadow: 0 0 50px rgba(0, 206, 201, 0.3);
+        }
+
+        @keyframes slideFade {
+            0% { transform: translateX(-40px) scale(0.8); opacity: 0.3; border-radius: 50%; }
+            25% { transform: translateX(0) scale(1.1); opacity: 1; border-radius: 16px; }
+            50% { transform: translateX(40px) scale(0.8); opacity: 0.3; border-radius: 50%; }
+            75% { transform: translateX(0) scale(1.1); opacity: 1; border-radius: 16px; }
+            100% { transform: translateX(-40px) scale(0.8); opacity: 0.3; border-radius: 50%; }
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 640px) {
+            .container {
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                padding: 10px;
+            }
             .card {
-                padding: 1.8rem 1.2rem 2rem;
-                border-radius: 2rem;
+                padding: 20px 12px 30px;
             }
-            .title {
-                font-size: 1.7rem;
-            }
-            .title .emoji {
-                font-size: 2.2rem;
-            }
-            .image-wrapper {
-                max-width: 250px;
-            }
-            .btn {
-                padding: 0.7rem 1.8rem;
-                font-size: 1rem;
-            }
-            .flying-text {
-                font-size: 2.5rem;
+            .neon-text, .glitch, .wave-text {
+                font-size: 22px;
             }
         }
 
-        @media (max-width: 400px) {
-            .image-wrapper {
-                max-width: 200px;
-            }
-            .flying-text {
-                font-size: 2rem;
+        @media (max-width: 420px) {
+            .container {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
 
-    <div class="bg-effect"></div>
-
     <div class="container">
+
+        <!-- 1. Floating Orb -->
         <div class="card">
-            <div class="title">
-                <span class="emoji">🐒</span> BỊ LỪA RỒI!
-                <span class="sound-icon">🔊</span>
-            </div>
-            <p class="subtitle">⚡ "Đồ ngu đồ ăn hại" tự động phát ⚡</p>
-
-            <div class="image-wrapper">
-                <img 
-                    src="https://tse3.mm.bing.net/th/id/OIP.1XswuztcQnHn8lwz31z1MAHaHa?r=0&rs=1&pid=ImgDetMain&o=7&rm=3" 
-                    alt="Con vượn"
-                />
-            </div>
-
-            <!-- Vẫn giữ nút để nếu muốn bấm lại -->
-            <button class="btn" id="btnLua">😈 BẤM LẠI NÀO</button>
+            <h3>✨ Floating Orb</h3>
+            <div class="orb"></div>
+            <p style="color:rgba(255,255,255,0.5); font-size:13px;">Lơ lửng + hiệu ứng ánh sáng</p>
         </div>
+
+        <!-- 2. Spinning Galaxy -->
+        <div class="card">
+            <h3>🌀 Galaxy Spin</h3>
+            <div class="galaxy">
+                <div class="ring"></div>
+                <div class="ring"></div>
+                <div class="ring"></div>
+                <div class="dot"></div>
+            </div>
+            <p style="color:rgba(255,255,255,0.5); font-size:13px;">Vòng xoay thiên hà 3 lớp</p>
+        </div>
+
+        <!-- 3. Pulsing Heart -->
+        <div class="card">
+            <h3>❤️ Pulsing Heart</h3>
+            <div class="heart-container">
+                <span class="heart">❤️</span>
+            </div>
+            <p style="color:rgba(255,255,255,0.5); font-size:13px;">Tim đập rực rỡ</p>
+        </div>
+
+        <!-- 4. Neon Glow -->
+        <div class="card">
+            <h3>💡 Neon Pulse</h3>
+            <div class="neon-text">NEON</div>
+            <p style="color:rgba(255,255,255,0.5); font-size:13px;">Hiệu ứng ánh sáng phát sáng</p>
+        </div>
+
+        <!-- 5. Morphing Shape -->
+        <div class="card">
+            <h3>🌀 Morph Shape</h3>
+            <div class="morph"></div>
+            <p style="color:rgba(255,255,255,0.5); font-size:13px;">Biến đổi hình học 4D</p>
+        </div>
+
+        <!-- 6. Bounce + Rotate -->
+        <div class="card">
+            <h3>🎯 Bounce Rotate</h3>
+            <div class="bounce-rotate"></div>
+            <p style="color:rgba(255,255,255,0.5); font-size:13px;">Nảy + xoay + biến dạng</p>
+        </div>
+
+        <!-- 7. Wave Text -->
+        <div class="card">
+            <h3>🌊 Wave Text</h3>
+            <div class="wave-text">
+                <span style="--i:0">W</span>
+                <span style="--i:1">A</span>
+                <span style="--i:2">V</span>
+                <span style="--i:3">E</span>
+                <span style="--i:4">!</span>
+            </div>
+            <p style="color:rgba(255,255,255,0.5); font-size:13px;">Từng chữ nhấp nhô</p>
+        </div>
+
+        <!-- 8. Particle Burst -->
+        <div class="card">
+            <h3>💥 Particle Burst</h3>
+            <div class="particle-container">
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+            </div>
+            <p style="color:rgba(255,255,255,0.5); font-size:13px;">Bùng nổ hạt màu sắc</p>
+        </div>
+
+        <!-- 9. Glitch -->
+        <div class="card">
+            <h3>📺 Glitch Effect</h3>
+            <div class="glitch">GLITCH</div>
+            <p style="color:rgba(255,255,255,0.5); font-size:13px;">Hiệu ứng nhiễu sóng</p>
+        </div>
+
+        <!-- 10. Slide + Fade -->
+        <div class="card">
+            <h3>🎭 Slide Fade</h3>
+            <div class="slide-fade"></div>
+            <p style="color:rgba(255,255,255,0.5); font-size:13px;">Trượt + mờ dần + biến hình</p>
+        </div>
+
     </div>
-
-    <script>
-        // ============================================================
-        // FILE NHẠC CỦA BẠN - Đặt tên file đúng ở đây
-        // ============================================================
-        const localSound = 'do-ngu-do-an-hai.mp3'; // 👈 Tên file của bạn
-
-        // Link dự phòng nếu không có file cục bộ
-        const fallbackSounds = [
-            'https://www.myinstants.com/media/sounds/trollge.mp3',
-            'https://www.myinstants.com/media/sounds/vine-boom.mp3'
-        ];
-
-        let audio = null;
-
-        // ============================================================
-        // HÀM PHÁT NHẠC - TỰ ĐỘNG KHI VÀO TRANG
-        // ============================================================
-        function playMemeSound() {
-            try {
-                if (audio) {
-                    audio.pause();
-                    audio.currentTime = 0;
-                }
-
-                audio = new Audio();
-
-                // THỬ FILE CỤC BỘ
-                audio.src = localSound;
-                audio.volume = 0.8;
-
-                let fallbackIndex = 0;
-
-                audio.onerror = function() {
-                    console.log('⚠️ Không tải được file cục bộ, thử link dự phòng...');
-                    if (fallbackIndex < fallbackSounds.length) {
-                        audio.src = fallbackSounds[fallbackIndex];
-                        fallbackIndex++;
-                        audio.load();
-                        audio.play().catch(() => audio.onerror());
-                    } else {
-                        console.log('❌ Không thể phát âm thanh nào');
-                    }
-                };
-
-                audio.play().catch(() => audio.onerror());
-
-            } catch (e) {
-                console.log('Lỗi phát nhạc:', e);
-            }
-        }
-
-        // ============================================================
-        // TẠO CHỮ BAY "BỊ LỪA RỒI!" + "ĐỒ NGU ĐỒ ĂN HẠI"
-        // ============================================================
-        function createFlyingText() {
-            document.querySelectorAll('.flying-text, .overlay').forEach(el => el.remove());
-
-            const overlay = document.createElement('div');
-            overlay.className = 'overlay';
-            document.body.appendChild(overlay);
-
-            const phrases = [
-                "BỊ LỪA RỒI!", "HAHAHA!", "BỊ LỪA RỒI!", "ÔI TRỜI!",
-                "LỪA ĐẢO!", "NGU NGƯỜI!", "BỊ LỪA RỒI!", "🤣🤣🤣",
-                "ĐỒ NGU ĐỒ ĂN HẠI!", "ĐỒ NGU!", "ĂN HẠI!", "BỊ LỪA RỒI!"
-            ];
-
-            for (let i = 0; i < 30; i++) {
-                const el = document.createElement('div');
-                el.className = 'flying-text';
-                el.textContent = phrases[Math.floor(Math.random() * phrases.length)];
-                el.style.left = Math.random() * 85 + 5 + '%';
-                el.style.top = Math.random() * 85 + 5 + '%';
-                el.style.fontSize = (Math.random() * 3 + 2.5) + 'rem';
-                el.style.animationDuration = (Math.random() * 3.5 + 3) + 's';
-                el.style.animationDelay = (Math.random() * 1.8) + 's';
-                el.style.transform = `rotate(${Math.random() * 60 - 30}deg)`;
-                
-                const colors = ['#ff2222', '#ff4444', '#ff6633', '#ff5555', '#ff3333', '#ff7744', '#ffaa00'];
-                el.style.color = colors[Math.floor(Math.random() * colors.length)];
-                
-                document.body.appendChild(el);
-            }
-
-            setTimeout(() => {
-                document.querySelectorAll('.flying-text, .overlay').forEach(el => el.remove());
-            }, 7000);
-        }
-
-        // ============================================================
-        // KÍCH HOẠT TẤT CẢ KHI VỪA VÀO TRANG
-        // ============================================================
-        
-        // 1. Phát nhạc ngay khi trang tải
-        setTimeout(() => {
-            playMemeSound();
-        }, 300);
-
-        // 2. Cho chữ bay sau 0.5s
-        setTimeout(() => {
-            createFlyingText();
-        }, 500);
-
-        // 3. Tự động lặp lại mỗi 8 giây
-        setInterval(() => {
-            playMemeSound();
-            createFlyingText();
-        }, 8000);
-
-        // ============================================================
-        // NÚT BẤM - ĐỂ DÙNG KHI MUỐN KÍCH HOẠT LẠI
-        // ============================================================
-        const btnLua = document.getElementById('btnLua');
-
-        btnLua.addEventListener('click', function() {
-            playMemeSound();
-            createFlyingText();
-            
-            this.textContent = '🔊 ĐANG PHÁT...';
-            this.disabled = true;
-            
-            setTimeout(() => {
-                btnLua.textContent = '😈 BẤM LẠI NÀO';
-                btnLua.disabled = false;
-            }, 3000);
-        });
-
-        // ============================================================
-        // HƯỚNG DẪN
-        // ============================================================
-        console.log('🐒 Trang lừa đảo với meme "đồ ngu đồ ăn hại" đã sẵn sàng!');
-        console.log('📌 Mở trang là NHẠC TỰ ĐỘNG PHÁT + CHỮ BAY NGAY!');
-        console.log('📌 CÁCH THÊM NHẠC CỦA BẠN:');
-        console.log('1. Tải file "do-ngu-do-an-hai.mp3" về từ SoundInstants');
-        console.log('2. Đặt file cùng thư mục với file HTML này');
-        console.log('3. Mở lại trang web và tận hưởng!');
-        console.log('🔊 Nhấn nút để phát lại khi muốn!');
-    </script>
 
 </body>
 </html>
