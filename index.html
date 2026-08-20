@@ -3,85 +3,108 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🏦 Ngân Hàng Tình Yêu - Dành Cho Em</title>
+    <title>💕 Ngân Hàng Tình Yêu</title>
     <link rel="stylesheet" href="css/style.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Quicksand:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
-    <!-- Background animation -->
-    <div class="bg-hearts"></div>
+    <div id="app">
+        <!-- Nền hoa đào rơi -->
+        <div class="cherry-blossom-container" id="blossomContainer"></div>
 
-    <div class="container">
-        <!-- Header -->
-        <header class="bank-header">
-            <div class="logo">🏦</div>
-            <h1 class="bank-name">Ngân Hàng Tình Yêu</h1>
-            <p class="slogan">"Nơi gửi gắm con tim"</p>
-        </header>
+        <!-- Container chính -->
+        <div class="main-container">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-icon">🌸</div>
+                <h1>Ngân Hàng Tình Yêu</h1>
+                <p class="subtitle">— Nơi gửi gắm những rung động đầu đời —</p>
+            </div>
 
-        <!-- Main Card -->
-        <div class="love-card" id="loveCard">
-            <div class="card-content">
-                <div class="avatar">
-                    <span class="emoji-big">💕</span>
-                </div>
-                <h2 class="greeting" id="greetingText">Gửi đến người con yêu thương nhất</h2>
-                <p class="message" id="messageText">
-                    Anh đã mở một tài khoản đặc biệt tại ngân hàng này,
-                    <br />và chỉ có <strong>EM</strong> mới có quyền rút tiền...
-                </p>
-
-                <!-- Account Info -->
-                <div class="account-info">
-                    <div class="balance">
-                        <span class="label">Số dư tình cảm</span>
-                        <span class="amount" id="balanceAmount">❤️ 1.000.000.000</span>
+            <!-- Card chính -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="avatar-ring">
+                        <span class="avatar-emoji">💑</span>
                     </div>
-                    <div class="account-number">
-                        <span class="label">Số tài khoản</span>
-                        <span class="number" id="accountNumber">LOVE - 14082026</span>
+                    <h2 id="greetingText">Gửi đến <span class="highlight">người con yêu</span></h2>
+                    <p class="card-sub" id="messageText">
+                        Anh đã mở một tài khoản đặc biệt tại ngân hàng này<br />
+                        và chỉ có <strong>EM</strong> mới có quyền rút tiền...
+                    </p>
+                </div>
+
+                <!-- Số dư -->
+                <div class="balance-wrapper">
+                    <div class="balance-card">
+                        <div class="balance-label">💳 Số dư tình cảm</div>
+                        <div class="balance-amount" id="balanceAmount">1.000.000.000</div>
+                        <div class="balance-currency">❤️ yêu thương</div>
+                    </div>
+                    <div class="account-id">
+                        <span>📌 Số TK:</span>
+                        <strong>LOVE • 14.08.2026</strong>
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
-                <div class="actions">
-                    <button class="btn btn-primary" id="btnDeposit">
-                        💝 Gửi thêm yêu thương
+                <!-- Nút hành động -->
+                <div class="action-grid">
+                    <button class="btn btn-deposit" id="btnDeposit">
+                        <span class="btn-icon">💝</span>
+                        Gửi yêu thương
                     </button>
-                    <button class="btn btn-secondary" id="btnWithdraw">
-                        💖 Rút trái tim
+                    <button class="btn btn-withdraw" id="btnWithdraw">
+                        <span class="btn-icon">💖</span>
+                        Nhận thông điệp
                     </button>
-                    <button class="btn btn-special" id="btnSurprise">
-                        🎁 Quà bất ngờ
+                    <button class="btn btn-surprise" id="btnSurprise">
+                        <span class="btn-icon">🎁</span>
+                        Quà bất ngờ
                     </button>
                 </div>
 
-                <!-- Love Letter -->
-                <div class="love-letter" id="loveLetter" style="display: none">
-                    <div class="letter-content">
-                        <h3>💌 Thư tình</h3>
-                        <p id="letterText">
-                            Em yêu quý!<br /><br />
-                            Anh viết những dòng này từ sâu thẳm trái tim...
-                            Mỗi ngày trôi qua, anh lại càng thêm yêu em.
-                            Em là ánh sáng, là niềm vui, là tất cả cuộc đời anh.
-                            <br /><br />
-                            <span class="signature">— Người luôn yêu em —</span>
-                        </p>
-                        <button class="btn-close-letter" id="closeLetter">✖</button>
+                <!-- Lịch sử giao dịch -->
+                <div class="history-section">
+                    <div class="history-header">
+                        <span>📋 Lịch sử giao dịch</span>
+                        <button class="btn-clear" id="btnClearHistory">Xóa</button>
+                    </div>
+                    <div class="history-list" id="historyList">
+                        <div class="history-empty">Chưa có giao dịch nào</div>
+                    </div>
+                </div>
+
+                <!-- Footer card -->
+                <div class="card-footer">
+                    <span>💕 Made with love</span>
+                </div>
+            </div>
+
+            <!-- Footer trang -->
+            <div class="page-footer">
+                <p>© 2026 • Dành tặng người anh thương nhất</p>
+            </div>
+        </div>
+
+        <!-- Modal thư tình -->
+        <div class="modal" id="loveLetterModal">
+            <div class="modal-content">
+                <button class="modal-close" id="closeLetter">✕</button>
+                <div class="modal-body">
+                    <div class="letter-decoration">💌</div>
+                    <h3>Thư tình</h3>
+                    <div class="letter-text" id="letterText">
+                        Em yêu quý!<br /><br />
+                        Anh viết những dòng này từ sâu thẳm trái tim...<br />
+                        Mỗi ngày trôi qua, anh lại càng thêm yêu em.<br />
+                        Em là ánh sáng, là niềm vui, là tất cả cuộc đời anh.<br /><br />
+                        <span class="letter-sign">— Người luôn yêu em —</span>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Footer -->
-        <footer>
-            <p>Made with ❤️ dành tặng người anh yêu nhất</p>
-            <p class="footer-note">© 2026 Ngân Hàng Tình Yêu</p>
-        </footer>
     </div>
 
-    <!-- Script -->
     <script src="js/script.js"></script>
 </body>
 </html>
