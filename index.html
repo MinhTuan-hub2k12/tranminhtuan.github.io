@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>✨ SPACE SHOOTER - Game Vũ Trụ Xịn Xò</title>
+    <title>🌤️ WeatherHub - Đồng hồ + Thời tiết + Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        /* ===== RESET & FULLSCREEN ===== */
+        /* ===== RESET ===== */
         * {
             margin: 0;
             padding: 0;
@@ -14,1064 +15,1167 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0a0a1a;
-            overflow: hidden;
-            height: 100vh;
-            user-select: none;
+            background: #0a0e27;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        /* ===== BACKGROUND STARS ===== */
-        #stars-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            background: radial-gradient(ellipse at center, #0d0d2b 0%, #050510 100%);
-        }
-
-        /* ===== MAIN GAME ===== */
-        #game-wrapper {
-            position: relative;
-            z-index: 1;
-            width: 100vw;
-            height: 100vh;
+        /* ===== HEADER ===== */
+        .header {
+            background: linear-gradient(135deg, rgba(10, 14, 39, 0.95), rgba(30, 20, 80, 0.9));
+            padding: 20px 30px;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 900;
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5, #a29bfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+        }
+
+        .logo span {
+            font-size: 28px;
+            -webkit-text-fill-color: initial;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 8px 16px;
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s;
+        }
+
+        .search-box:focus-within {
+            border-color: rgba(0, 210, 255, 0.4);
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.1);
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 15px;
+            padding: 8px 5px;
+            min-width: 200px;
+        }
+
+        .search-box input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .search-box button {
+            background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 50px;
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .search-box button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.3);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
             align-items: center;
         }
 
-        #game-container {
-            position: relative;
-            width: 800px;
-            height: 600px;
-            border: 2px solid rgba(255, 215, 0, 0.3);
-            border-radius: 20px;
-            overflow: hidden;
-            background: rgba(0, 0, 30, 0.7);
-            backdrop-filter: blur(5px);
-            box-shadow: 0 0 80px rgba(100, 50, 255, 0.2),
-                        0 0 160px rgba(100, 50, 255, 0.1),
-                        inset 0 0 80px rgba(100, 50, 255, 0.05);
-            cursor: none;
+        .header-actions button {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
         }
 
-        /* ===== GLOW BORDER ANIMATION ===== */
-        #game-container::before {
+        .header-actions button:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+        }
+
+        /* ===== MAIN GRID ===== */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+            min-height: calc(100vh - 100px);
+        }
+
+        /* ===== LEFT PANEL ===== */
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* ===== CLOCK CARD ===== */
+        .clock-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            border-radius: 24px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(20px);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .clock-card::before {
             content: '';
             position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            border-radius: 22px;
-            background: conic-gradient(from 0deg, 
-                #ff6b6b, #f7971e, #ffd200, #a29bfe, 
-                #6c5ce7, #fd79a8, #ff6b6b);
-            z-index: -1;
-            animation: rotateBorder 4s linear infinite;
-            opacity: 0.5;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(0, 210, 255, 0.03), transparent, rgba(58, 123, 213, 0.03), transparent);
+            animation: rotateBg 20s linear infinite;
         }
 
-        @keyframes rotateBorder {
+        @keyframes rotateBg {
             to { transform: rotate(360deg); }
         }
 
-        /* ===== PLAYER ===== */
-        #player {
-            position: absolute;
-            width: 50px;
-            height: 50px;
-            bottom: 50px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-            filter: drop-shadow(0 0 20px rgba(100, 200, 255, 0.6));
-            transition: filter 0.3s;
+        .clock-card > * {
+            position: relative;
+            z-index: 1;
         }
 
-        #player svg {
-            width: 100%;
-            height: 100%;
-            animation: floatShip 2s ease-in-out infinite;
-        }
-
-        @keyframes floatShip {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-5px); }
-        }
-
-        #player .engine {
-            animation: engineFire 0.3s ease-in-out infinite alternate;
-        }
-
-        @keyframes engineFire {
-            0% { opacity: 0.6; transform: scaleY(0.8); }
-            100% { opacity: 1; transform: scaleY(1.2); }
-        }
-
-        /* ===== BULLETS ===== */
-        .bullet {
-            position: absolute;
-            width: 4px;
-            height: 16px;
-            background: linear-gradient(to top, #00d2ff, #3a7bd5);
-            border-radius: 2px;
-            box-shadow: 0 0 20px rgba(0, 210, 255, 0.6);
-            z-index: 5;
-            animation: bulletTrail 0.2s ease-out;
-        }
-
-        @keyframes bulletTrail {
-            0% { transform: scaleY(0.3); opacity: 0.8; }
-            100% { transform: scaleY(1); opacity: 1; }
-        }
-
-        /* ===== ENEMIES ===== */
-        .enemy {
-            position: absolute;
-            z-index: 5;
-            animation: enemyAppear 0.5s ease-out;
-            filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.4));
-        }
-
-        @keyframes enemyAppear {
-            0% { transform: scale(0) rotate(180deg); opacity: 0; }
-            100% { transform: scale(1) rotate(0deg); opacity: 1; }
-        }
-
-        .enemy svg {
-            width: 100%;
-            height: 100%;
-            animation: enemyFloat 1.5s ease-in-out infinite;
-        }
-
-        @keyframes enemyFloat {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-8px) rotate(5deg); }
-        }
-
-        /* ===== EXPLOSION ===== */
-        .explosion {
-            position: absolute;
-            z-index: 20;
-            pointer-events: none;
-            animation: explode 0.6s ease-out forwards;
-        }
-
-        @keyframes explode {
-            0% { transform: scale(0.2); opacity: 1; }
-            50% { transform: scale(1.5); opacity: 1; }
-            100% { transform: scale(2); opacity: 0; }
-        }
-
-        /* ===== SCORE ===== */
-        #ui {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            display: flex;
-            justify-content: space-between;
-            z-index: 15;
-            color: #fff;
-            font-weight: 700;
-            text-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
-            font-size: 18px;
-            pointer-events: none;
-        }
-
-        #score {
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px 20px;
-            border-radius: 30px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 215, 0, 0.2);
-            font-size: 22px;
-            letter-spacing: 2px;
-            animation: scorePulse 2s ease-in-out infinite;
-        }
-
-        #score span {
-            color: #ffd700;
-        }
-
-        @keyframes scorePulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
-
-        #lives {
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px 20px;
-            border-radius: 30px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 100, 100, 0.2);
-            font-size: 22px;
-        }
-
-        .life-heart {
-            color: #ff4757;
-            display: inline-block;
-            animation: heartBeat 0.8s ease-in-out infinite;
-            margin: 0 2px;
-        }
-
-        @keyframes heartBeat {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-        }
-
-        /* ===== GAME OVER ===== */
-        #game-over {
-            display: none;
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            z-index: 30;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        #game-over.show {
-            display: flex;
-        }
-
-        @keyframes fadeIn {
-            0% { opacity: 0; transform: scale(0.9); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
-        #game-over h1 {
+        .clock-time {
             font-size: 72px;
-            color: #ff4757;
-            text-shadow: 0 0 40px rgba(255, 71, 87, 0.5),
-                         0 0 80px rgba(255, 71, 87, 0.3);
-            animation: glitchText 2s infinite;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00d2ff, #3a7bd5, #a29bfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 3px;
+            line-height: 1;
+            text-shadow: 0 0 60px rgba(0, 210, 255, 0.2);
+        }
+
+        .clock-date {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 10px;
+            letter-spacing: 2px;
+        }
+
+        .clock-seconds {
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 5px;
+            font-weight: 300;
+        }
+
+        .clock-greeting {
+            font-size: 20px;
+            margin-top: 15px;
+            padding: 8px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50px;
+            display: inline-block;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        /* ===== WEATHER CARD ===== */
+        .weather-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            border-radius: 24px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(20px);
+            flex: 1;
+        }
+
+        .weather-card h3 {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 15px;
+            font-weight: 400;
+        }
+
+        .weather-main {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .weather-icon {
+            font-size: 64px;
+            animation: floatIcon 3s ease-in-out infinite;
+        }
+
+        @keyframes floatIcon {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .weather-temp {
+            font-size: 52px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ffd700, #f7971e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .weather-desc {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 15px;
+        }
+
+        .weather-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .weather-detail-item {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .weather-detail-item .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.3);
+            letter-spacing: 1px;
+        }
+
+        .weather-detail-item .value {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 3px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* ===== FORECAST ===== */
+        .forecast-card {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 16px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .forecast-card h4 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(255, 255, 255, 0.3);
             margin-bottom: 10px;
         }
 
-        @keyframes glitchText {
-            0%, 100% { transform: translate(0); }
-            20% { transform: translate(-5px, 3px); }
-            40% { transform: translate(5px, -3px); }
-            60% { transform: translate(-3px, 5px); }
-            80% { transform: translate(3px, -5px); }
+        .forecast-list {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 5px;
         }
 
-        #game-over .final-score {
+        .forecast-list::-webkit-scrollbar {
+            height: 3px;
+        }
+
+        .forecast-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .forecast-list::-webkit-scrollbar-thumb {
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            border-radius: 10px;
+        }
+
+        .forecast-item {
+            min-width: 80px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px 15px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            flex-shrink: 0;
+        }
+
+        .forecast-item .day {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .forecast-item .icon {
             font-size: 28px;
-            color: #ffd700;
-            margin: 10px 0 20px;
-            text-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+            margin: 5px 0;
         }
 
-        #game-over .final-score span {
-            font-size: 48px;
-            font-weight: 900;
+        .forecast-item .temp {
+            font-size: 16px;
+            font-weight: 600;
         }
 
-        #restart-btn {
-            padding: 16px 50px;
-            font-size: 22px;
-            font-weight: 700;
-            border: none;
-            border-radius: 50px;
-            background: linear-gradient(135deg, #f7971e, #ffd200);
-            color: #0a0a1a;
+        .forecast-item .temp-high {
+            color: #ff6b6b;
+        }
+
+        .forecast-item .temp-low {
+            color: #74b9ff;
+            font-size: 13px;
+        }
+
+        /* ===== MAP ===== */
+        .map-container {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+            border-radius: 24px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            position: relative;
+            min-height: 500px;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            min-height: 500px;
+            background: #0a0e27;
+        }
+
+        .map-overlay-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .map-overlay-controls button {
+            background: rgba(10, 14, 39, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 0 40px rgba(247, 151, 30, 0.3);
-            letter-spacing: 2px;
-            text-transform: uppercase;
+            font-size: 14px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        #restart-btn:hover {
-            transform: scale(1.1) translateY(-5px);
-            box-shadow: 0 0 60px rgba(247, 151, 30, 0.5);
+        .map-overlay-controls button:hover {
+            background: rgba(0, 210, 255, 0.2);
+            border-color: rgba(0, 210, 255, 0.3);
+            transform: scale(1.05);
         }
 
-        #restart-btn:active {
-            transform: scale(0.95);
+        .map-overlay-controls button.active {
+            background: rgba(0, 210, 255, 0.2);
+            border-color: #00d2ff;
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.2);
         }
 
-        /* ===== COMBO ===== */
-        #combo {
-            position: absolute;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 15;
-            color: #ffd700;
-            font-size: 28px;
-            font-weight: 900;
-            text-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
-            opacity: 0;
-            transition: all 0.3s;
-            pointer-events: none;
-        }
-
-        #combo.show {
-            opacity: 1;
-            animation: comboPop 0.5s ease-out;
-        }
-
-        @keyframes comboPop {
-            0% { transform: translateX(-50%) scale(0.5); opacity: 0; }
-            50% { transform: translateX(-50%) scale(1.3); opacity: 1; }
-            100% { transform: translateX(-50%) scale(1); opacity: 1; }
-        }
-
-        /* ===== POWERUP ===== */
-        .powerup {
-            position: absolute;
-            z-index: 5;
-            font-size: 30px;
-            animation: powerupFloat 2s ease-in-out infinite;
-            filter: drop-shadow(0 0 30px rgba(0, 255, 200, 0.6));
-            cursor: pointer;
-        }
-
-        @keyframes powerupFloat {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-15px) rotate(180deg); }
-        }
-
-        /* ===== SHOOTING COOLDOWN ===== */
-        #cooldown-indicator {
+        .map-legend {
             position: absolute;
             bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 12;
-            width: 200px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
-            overflow: hidden;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(10, 14, 39, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
         }
 
-        #cooldown-bar {
-            height: 100%;
-            width: 100%;
-            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
-            border-radius: 2px;
-            transition: width 0.05s linear;
-            box-shadow: 0 0 20px rgba(0, 210, 255, 0.3);
+        .map-legend .gradient {
+            display: flex;
+            gap: 2px;
+            margin-top: 5px;
+            height: 8px;
+            width: 150px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #74b9ff, #00d2ff, #fdcb6e, #ff6b6b, #e84393);
+        }
+
+        /* ===== LOADING ===== */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .loading .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.05);
+            border-top: 3px solid #00d2ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         /* ===== RESPONSIVE ===== */
-        @media (max-width: 850px) {
-            #game-container {
-                width: 96vw;
-                height: 70vh;
-                border-radius: 12px;
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
             }
-            #game-container::before {
-                border-radius: 14px;
+
+            .left-panel {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
             }
-            #ui {
-                font-size: 14px;
-                top: 10px;
-                left: 10px;
-                right: 10px;
-            }
-            #score, #lives {
-                padding: 6px 14px;
-                font-size: 16px;
-            }
-            #game-over h1 {
-                font-size: 42px;
-            }
-            #game-over .final-score {
-                font-size: 20px;
-            }
-            #game-over .final-score span {
-                font-size: 32px;
-            }
-            #restart-btn {
-                padding: 12px 32px;
-                font-size: 16px;
+
+            .clock-card {
+                grid-column: 1 / -1;
             }
         }
 
-        @media (max-width: 500px) {
-            #game-container {
-                height: 60vh;
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+                padding: 15px;
             }
-            #ui {
-                font-size: 12px;
-            }
-            #score, #lives {
-                padding: 4px 10px;
+
+            .search-box input {
+                min-width: 120px;
                 font-size: 13px;
             }
-            #player {
-                width: 35px;
-                height: 35px;
+
+            .left-panel {
+                grid-template-columns: 1fr;
             }
-            .enemy {
-                width: 35px !important;
-                height: 35px !important;
+
+            .clock-time {
+                font-size: 48px;
             }
-            #game-over h1 {
-                font-size: 30px;
+
+            .weather-temp {
+                font-size: 38px;
             }
+
+            .weather-main {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .weather-details {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            #map, .map-container {
+                min-height: 350px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .clock-time {
+                font-size: 36px;
+            }
+
+            .header-actions button {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .search-box {
+                padding: 6px 12px;
+            }
+
+            .search-box input {
+                min-width: 80px;
+                font-size: 12px;
+            }
+
+            .search-box button {
+                padding: 6px 14px;
+                font-size: 12px;
+            }
+        }
+
+        /* ===== CUSTOM SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
     </style>
 </head>
 <body>
+    <!-- ===== HEADER ===== -->
+    <header class="header">
+        <div class="logo">
+            <span>🌤️</span> WeatherHub
+        </div>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 Tìm thành phố..." value="Hanoi">
+            <button id="searchBtn">Tìm</button>
+        </div>
+        <div class="header-actions">
+            <button onclick="getCurrentLocation()">📍 Vị trí của tôi</button>
+            <button onclick="toggleMapLayer()">🗺️ Lớp bản đồ</button>
+        </div>
+    </header>
 
-    <!-- ===== STARS BACKGROUND ===== -->
-    <canvas id="stars-canvas"></canvas>
+    <!-- ===== MAIN ===== -->
+    <div class="main-grid">
+        <!-- LEFT PANEL -->
+        <div class="left-panel">
+            <!-- Clock -->
+            <div class="clock-card">
+                <div class="clock-time" id="clockTime">--:--:--</div>
+                <div class="clock-date" id="clockDate">--</div>
+                <div class="clock-seconds" id="clockSeconds">--</div>
+                <div class="clock-greeting" id="clockGreeting">✨ Chào buổi...</div>
+            </div>
 
-    <!-- ===== GAME ===== -->
-    <div id="game-wrapper">
-        <div id="game-container">
+            <!-- Weather -->
+            <div class="weather-card" id="weatherCard">
+                <h3>🌡️ Thời tiết hiện tại</h3>
+                <div id="weatherContent">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Đang tải dữ liệu...</p>
+                    </div>
+                </div>
 
-            <!-- UI -->
-            <div id="ui">
-                <div id="score">⭐ <span id="score-value">0</span></div>
-                <div id="lives">
-                    <span id="lives-value">❤️❤️❤️</span>
+                <!-- Forecast -->
+                <div class="forecast-card">
+                    <h4>📅 Dự báo 5 ngày</h4>
+                    <div class="forecast-list" id="forecastList">
+                        <div class="loading" style="padding:10px;font-size:12px;">
+                            Đang tải...
+                        </div>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <div id="combo">🔥 COMBO x<span id="combo-value">0</span></div>
+        <!-- MAP -->
+        <div class="map-container">
+            <div id="map"></div>
 
-            <!-- Player -->
-            <div id="player">
-                <svg viewBox="0 0 100 100">
-                    <defs>
-                        <linearGradient id="shipGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style="stop-color:#00d2ff;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#3a7bd5;stop-opacity:1" />
-                        </linearGradient>
-                        <filter id="glow">
-                            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                            <feMerge>
-                                <feMergeNode in="coloredBlur"/>
-                                <feMergeNode in="SourceGraphic"/>
-                            </feMerge>
-                        </filter>
-                    </defs>
-                    <polygon points="50,10 15,85 50,65 85,85" fill="url(#shipGrad)" filter="url(#glow)"/>
-                    <polygon points="50,25 35,70 50,55 65,70" fill="#fff" opacity="0.3"/>
-                    <ellipse cx="50" cy="85" rx="15" ry="8" fill="#ff6b35" opacity="0.8" class="engine">
-                        <animate attributeName="ry" values="6;10;6" dur="0.2s" repeatCount="indefinite"/>
-                    </ellipse>
-                </svg>
+            <!-- Map Controls -->
+            <div class="map-overlay-controls">
+                <button onclick="zoomIn()" title="Phóng to">➕</button>
+                <button onclick="zoomOut()" title="Thu nhỏ">➖</button>
+                <button onclick="resetMapView()" title="Về vị trí ban đầu">🏠</button>
+                <button id="toggleWindLayer" class="active" onclick="toggleWindLayer()" title="Hiển thị gió">💨</button>
+                <button id="toggleTempLayer" onclick="toggleTempLayer()" title="Hiển thị nhiệt độ">🌡️</button>
             </div>
 
-            <!-- Cooldown -->
-            <div id="cooldown-indicator">
-                <div id="cooldown-bar"></div>
+            <!-- Legend -->
+            <div class="map-legend">
+                <span>🌡️ Nhiệt độ</span>
+                <div class="gradient"></div>
+                <span style="font-size:10px;display:flex;justify-content:space-between;margin-top:3px;">
+                    <span>10°C</span>
+                    <span>30°C</span>
+                    <span>40°C+</span>
+                </span>
             </div>
-
-            <!-- Game Over -->
-            <div id="game-over">
-                <h1>💀 GAME OVER</h1>
-                <div class="final-score">⭐ SCORE: <span id="final-score">0</span></div>
-                <button id="restart-btn">🔄 Chơi lại</button>
-            </div>
-
         </div>
     </div>
 
+    <!-- ===== SCRIPTS ===== -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // ================================================
-        // 1. STARS BACKGROUND
-        // ================================================
-        const canvas = document.getElementById('stars-canvas');
-        const ctx = canvas.getContext('2d');
-        let stars = [];
+        // ============================================================
+        // 1. CLOCK
+        // ============================================================
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
 
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            document.getElementById('clockTime').textContent = `${hours}:${minutes}:${seconds}`;
+            document.getElementById('clockSeconds').textContent = `⏱️ ${seconds}s`;
+
+            // Date
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('clockDate').textContent = now.toLocaleDateString('vi-VN', options);
+
+            // Greeting
+            const hour = now.getHours();
+            let greeting = '🌙 Chúc bạn ngủ ngon!';
+            if (hour >= 5 && hour < 12) greeting = '🌅 Chào buổi sáng!';
+            else if (hour >= 12 && hour < 18) greeting = '☀️ Chào buổi chiều!';
+            else if (hour >= 18 && hour < 22) greeting = '🌇 Chào buổi tối!';
+            document.getElementById('clockGreeting').textContent = greeting;
         }
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
 
-        function initStars() {
-            stars = [];
-            for (let i = 0; i < 300; i++) {
-                stars.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    radius: Math.random() * 2,
-                    speed: Math.random() * 0.5 + 0.1,
-                    opacity: Math.random(),
-                    twinkleSpeed: Math.random() * 0.02 + 0.01
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // ============================================================
+        // 2. MAP (Leaflet)
+        // ============================================================
+        let map;
+        let currentCity = 'Hanoi';
+        let windLayer = null;
+        let tempLayer = null;
+        let showWind = true;
+        let showTemp = false;
+        let mapMarkers = [];
+
+        function initMap(lat = 21.0285, lng = 105.8542) {
+            if (map) {
+                map.setView([lat, lng], 8);
+                return;
+            }
+
+            map = L.map('map', {
+                center: [lat, lng],
+                zoom: 8,
+                zoomControl: false,
+                attributionControl: true
+            });
+
+            // Base tile layer (dark style like Windy)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; CartoDB',
+                subdomains: 'abcd',
+                maxZoom: 19,
+                minZoom: 3
+            }).addTo(map);
+
+            // Add marker
+            addMarker(lat, lng, currentCity);
+
+            // Add wind layer (simulated with arrows)
+            addWindLayer();
+
+            // Resize handler
+            setTimeout(() => map.invalidateSize(), 500);
+        }
+
+        function addMarker(lat, lng, name) {
+            // Clear old markers
+            mapMarkers.forEach(m => map.removeLayer(m));
+            mapMarkers = [];
+
+            const icon = L.divIcon({
+                html: `<div style="
+                    background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 20px;
+                    box-shadow: 0 0 30px rgba(0,210,255,0.5);
+                    border: 2px solid rgba(255,255,255,0.2);
+                ">📍</div>`,
+                className: '',
+                iconSize: [40, 40],
+                iconAnchor: [20, 40]
+            });
+
+            const marker = L.marker([lat, lng], { icon }).addTo(map);
+            marker.bindPopup(`
+                <div style="color:#000;font-weight:700;font-size:16px;">
+                    ${name}
+                    <br>
+                    <span style="font-weight:400;font-size:12px;color:#666;">
+                        🕐 ${new Date().toLocaleTimeString('vi-VN')}
+                    </span>
+                </div>
+            `);
+            marker.openPopup();
+
+            mapMarkers.push(marker);
+        }
+
+        // ============================================================
+        // 3. WIND LAYER (Simulated)
+        // ============================================================
+        function addWindLayer() {
+            if (windLayer) {
+                map.removeLayer(windLayer);
+                windLayer = null;
+            }
+
+            if (!showWind) return;
+
+            // Create wind arrows using canvas
+            const windData = [];
+            const bounds = map.getBounds();
+            const latStep = (bounds.getNorth() - bounds.getSouth()) / 10;
+            const lngStep = (bounds.getEast() - bounds.getWest()) / 10;
+
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
+                    const lat = bounds.getSouth() + i * latStep + latStep / 2;
+                    const lng = bounds.getWest() + j * lngStep + lngStep / 2;
+                    const angle = (i * 45 + j * 30 + Date.now() / 50000) % 360;
+                    const speed = 0.5 + Math.random() * 2;
+                    windData.push({ lat, lng, angle, speed });
+                }
+            }
+
+            // Draw wind arrows
+            const canvas = document.createElement('canvas');
+            canvas.width = 100;
+            canvas.height = 100;
+
+            windLayer = L.canvasLayer({
+                draw: function() {
+                    const ctx = this.canvas.getContext('2d');
+                    const size = this.canvas.width;
+                    ctx.clearRect(0, 0, size, size);
+
+                    // Draw wind arrows
+                    windData.forEach((w, index) => {
+                        const x = (w.lng - bounds.getWest()) / (bounds.getEast() - bounds.getWest()) * size;
+                        const y = (bounds.getNorth() - w.lat) / (bounds.getNorth() - bounds.getSouth()) * size;
+
+                        const angleRad = (w.angle * Math.PI) / 180;
+                        const len = 8 + w.speed * 4;
+                        const endX = x + len * Math.cos(angleRad);
+                        const endY = y - len * Math.sin(angleRad);
+
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(endX, endY);
+                        ctx.strokeStyle = `hsla(200, 80%, 70%, ${0.3 + w.speed * 0.2})`;
+                        ctx.lineWidth = 1.5 + w.speed * 0.5;
+                        ctx.stroke();
+
+                        // Arrowhead
+                        const arrowSize = 5;
+                        const a1 = angleRad + 0.5;
+                        const a2 = angleRad - 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(endX, endY);
+                        ctx.lineTo(endX - arrowSize * Math.cos(a1), endY + arrowSize * Math.sin(a1));
+                        ctx.moveTo(endX, endY);
+                        ctx.lineTo(endX - arrowSize * Math.cos(a2), endY + arrowSize * Math.sin(a2));
+                        ctx.strokeStyle = `hsla(200, 80%, 70%, ${0.3 + w.speed * 0.2})`;
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                    });
+                }
+            });
+
+            windLayer.addTo(map);
+
+            // Animate wind layer
+            function animateWind() {
+                if (!showWind) return;
+                if (windLayer) {
+                    windLayer.redraw();
+                }
+                requestAnimationFrame(animateWind);
+            }
+            animateWind();
+        }
+
+        // ============================================================
+        // 4. WEATHER DATA (OpenWeatherMap API)
+        // ============================================================
+        const API_KEY = 'b6907d289e10d714a6e88b30761fae0f';
+
+        async function getWeather(city) {
+            try {
+                const response = await fetch(
+                    `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric&lang=vi`
+                );
+                if (!response.ok) throw new Error('Không tìm thấy thành phố');
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        async function getForecast(city) {
+            try {
+                const response = await fetch(
+                    `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric&lang=vi&cnt=5`
+                );
+                if (!response.ok) throw new Error('Không thể lấy dự báo');
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        function getWeatherEmoji(weatherId, isNight = false) {
+            if (weatherId >= 200 && weatherId < 300) return '⛈️';
+            if (weatherId >= 300 && weatherId < 500) return '🌧️';
+            if (weatherId >= 500 && weatherId < 600) return '🌧️';
+            if (weatherId >= 600 && weatherId < 700) return '❄️';
+            if (weatherId >= 700 && weatherId < 800) return '🌫️';
+            if (weatherId === 800) return isNight ? '🌙' : '☀️';
+            if (weatherId === 801) return isNight ? '☁️' : '🌤️';
+            if (weatherId === 802) return '⛅';
+            if (weatherId >= 803) return '☁️';
+            return '🌈';
+        }
+
+        function getWindDirection(deg) {
+            const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+            return dirs[Math.round(deg / 45) % 8];
+        }
+
+        async function updateWeather(city) {
+            const weatherContent = document.getElementById('weatherContent');
+            const forecastList = document.getElementById('forecastList');
+
+            try {
+                // Show loading
+                weatherContent.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Đang tải dữ liệu...</p>
+                    </div>
+                `;
+                forecastList.innerHTML = `
+                    <div class="loading" style="padding:10px;font-size:12px;">
+                        Đang tải...
+                    </div>
+                `;
+
+                const [weather, forecast] = await Promise.all([
+                    getWeather(city),
+                    getForecast(city)
+                ]);
+
+                // Update weather
+                const isNight = new Date().getHours() < 6 || new Date().getHours() > 18;
+                const emoji = getWeatherEmoji(weather.weather[0].id, isNight);
+
+                weatherContent.innerHTML = `
+                    <div class="weather-main">
+                        <div class="weather-icon">${emoji}</div>
+                        <div>
+                            <div class="weather-temp">${Math.round(weather.main.temp)}°C</div>
+                            <div class="weather-desc">${weather.weather[0].description}</div>
+                        </div>
+                    </div>
+                    <div class="weather-details">
+                        <div class="weather-detail-item">
+                            <div class="label">🌡️ Cảm giác</div>
+                            <div class="value">${Math.round(weather.main.feels_like)}°C</div>
+                        </div>
+                        <div class="weather-detail-item">
+                            <div class="label">💧 Độ ẩm</div>
+                            <div class="value">${weather.main.humidity}%</div>
+                        </div>
+                        <div class="weather-detail-item">
+                            <div class="label">💨 Gió</div>
+                            <div class="value">${Math.round(weather.wind.speed * 3.6)} km/h</div>
+                        </div>
+                        <div class="weather-detail-item">
+                            <div class="label">🧭 Hướng gió</div>
+                            <div class="value">${getWindDirection(weather.wind.deg)}</div>
+                        </div>
+                        <div class="weather-detail-item">
+                            <div class="label">☀️ Áp suất</div>
+                            <div class="value">${weather.main.pressure} hPa</div>
+                        </div>
+                        <div class="weather-detail-item">
+                            <div class="label">👁️ Tầm nhìn</div>
+                            <div class="value">${(weather.visibility / 1000).toFixed(1)} km</div>
+                        </div>
+                    </div>
+                `;
+
+                // Update forecast
+                forecastList.innerHTML = '';
+                const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+
+                forecast.list.forEach((item, index) => {
+                    const date = new Date(item.dt * 1000);
+                    const day = days[date.getDay()];
+                    const emojiF = getWeatherEmoji(item.weather[0].id);
+
+                    const div = document.createElement('div');
+                    div.className = 'forecast-item';
+                    div.innerHTML = `
+                        <div class="day">${day}</div>
+                        <div class="icon">${emojiF}</div>
+                        <div class="temp">
+                            <span class="temp-high">${Math.round(item.main.temp_max)}°</span>
+                            <span class="temp-low">${Math.round(item.main.temp_min)}°</span>
+                        </div>
+                    `;
+                    forecastList.appendChild(div);
                 });
-            }
-        }
-        initStars();
 
-        function drawStars() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                // Update map
+                const lat = weather.coord.lat;
+                const lng = weather.coord.lon;
+                currentCity = city;
 
-            // Nebula effect
-            const grd = ctx.createRadialGradient(
-                canvas.width * 0.3, canvas.height * 0.4, 0,
-                canvas.width * 0.3, canvas.height * 0.4, canvas.width * 0.8
-            );
-            grd.addColorStop(0, 'rgba(100, 50, 255, 0.05)');
-            grd.addColorStop(0.5, 'rgba(255, 50, 150, 0.03)');
-            grd.addColorStop(1, 'rgba(0, 0, 0, 0)');
-            ctx.fillStyle = grd;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            stars.forEach(star => {
-                star.y += star.speed;
-                star.opacity += (Math.random() - 0.5) * star.twinkleSpeed;
-                star.opacity = Math.max(0.2, Math.min(1, star.opacity));
-
-                if (star.y > canvas.height) {
-                    star.y = 0;
-                    star.x = Math.random() * canvas.width;
+                if (map) {
+                    map.setView([lat, lng], 8);
+                    addMarker(lat, lng, city);
+                } else {
+                    initMap(lat, lng);
                 }
 
-                ctx.beginPath();
-                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity * 0.8})`;
-                ctx.fill();
+                // Update search input
+                document.getElementById('searchInput').value = city;
 
-                // Glow
-                if (star.radius > 1.2) {
-                    ctx.shadowColor = 'rgba(150, 200, 255, 0.3)';
-                    ctx.shadowBlur = 10;
-                    ctx.fill();
-                    ctx.shadowBlur = 0;
-                }
-            });
-
-            requestAnimationFrame(drawStars);
-        }
-        drawStars();
-
-        // ================================================
-        // 2. GAME ENGINE
-        // ================================================
-        const container = document.getElementById('game-container');
-        const player = document.getElementById('player');
-        const scoreElement = document.getElementById('score-value');
-        const livesElement = document.getElementById('lives-value');
-        const finalScoreElement = document.getElementById('final-score');
-        const gameOverElement = document.getElementById('game-over');
-        const restartBtn = document.getElementById('restart-btn');
-        const comboElement = document.getElementById('combo');
-        const comboValue = document.getElementById('combo-value');
-        const cooldownBar = document.getElementById('cooldown-bar');
-
-        // Game state
-        let game = {
-            score: 0,
-            lives: 3,
-            combo: 0,
-            maxCombo: 0,
-            isRunning: true,
-            isGameOver: false,
-            shootCooldown: 0,
-            maxShootCooldown: 12,
-            enemies: [],
-            bullets: [],
-            powerups: [],
-            explosions: [],
-            enemySpawnTimer: 0,
-            powerupSpawnTimer: 0,
-            mouseX: 0,
-            mouseY: 0
-        };
-
-        // Player position
-        let playerX = container.clientWidth / 2 - 25;
-        let playerY = container.clientHeight - 100;
-
-        // ================================================
-        // 3. SPAWN FUNCTIONS
-        // ================================================
-        function spawnEnemy() {
-            if (!game.isRunning) return;
-
-            const size = Math.random() * 25 + 25;
-            const x = Math.random() * (container.clientWidth - size);
-            const y = -size;
-
-            const enemy = document.createElement('div');
-            enemy.className = 'enemy';
-            enemy.style.width = size + 'px';
-            enemy.style.height = size + 'px';
-            enemy.style.left = x + 'px';
-            enemy.style.top = y + 'px';
-
-            // Random enemy type
-            const types = [
-                `<svg viewBox="0 0 100 100">
-                    <polygon points="50,10 90,90 10,90" fill="#ff4757" stroke="#ff6b81" stroke-width="2"/>
-                    <circle cx="35" cy="60" r="8" fill="#fff" opacity="0.6"/>
-                    <circle cx="65" cy="60" r="8" fill="#fff" opacity="0.6"/>
-                    <circle cx="50" cy="80" r="5" fill="#ff6b81"/>
-                </svg>`,
-                `<svg viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="40" fill="#2ed573" stroke="#7bed9f" stroke-width="2"/>
-                    <circle cx="35" cy="45" r="6" fill="#fff" opacity="0.6"/>
-                    <circle cx="65" cy="45" r="6" fill="#fff" opacity="0.6"/>
-                    <rect x="40" y="60" width="20" height="10" rx="5" fill="#ff6b81"/>
-                </svg>`,
-                `<svg viewBox="0 0 100 100">
-                    <rect x="20" y="20" width="60" height="60" rx="10" fill="#a29bfe" stroke="#6c5ce7" stroke-width="2"/>
-                    <circle cx="35" cy="40" r="5" fill="#fff" opacity="0.6"/>
-                    <circle cx="65" cy="40" r="5" fill="#fff" opacity="0.6"/>
-                    <rect x="40" y="55" width="20" height="6" rx="3" fill="#ff6b81"/>
-                </svg>`
-            ];
-
-            enemy.innerHTML = types[Math.floor(Math.random() * types.length)];
-            container.appendChild(enemy);
-
-            const speed = Math.random() * 2 + 1.5;
-
-            game.enemies.push({
-                element: enemy,
-                x: x,
-                y: y,
-                width: size,
-                height: size,
-                speed: speed,
-                hp: Math.random() > 0.7 ? 2 : 1,
-                type: Math.floor(Math.random() * 3)
-            });
+            } catch (error) {
+                weatherContent.innerHTML = `
+                    <div style="text-align:center;padding:30px;color:#ff6b6b;">
+                        <div style="font-size:40px;margin-bottom:10px;">😅</div>
+                        <p>${error.message}</p>
+                        <p style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:10px;">
+                            Thử nhập tên thành phố khác
+                        </p>
+                    </div>
+                `;
+                forecastList.innerHTML = '';
+            }
         }
 
-        function spawnPowerup(x, y) {
-            const types = ['⚡', '💎', '⭐'];
-            const type = types[Math.floor(Math.random() * types.length)];
+        // ============================================================
+        // 5. SEARCH & LOCATION
+        // ============================================================
+        document.getElementById('searchBtn').addEventListener('click', () => {
+            const city = document.getElementById('searchInput').value.trim();
+            if (city) updateWeather(city);
+        });
 
-            const el = document.createElement('div');
-            el.className = 'powerup';
-            el.textContent = type;
-            el.style.left = x + 'px';
-            el.style.top = y + 'px';
-            el.style.fontSize = (Math.random() * 10 + 25) + 'px';
-            container.appendChild(el);
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('searchBtn').click();
+            }
+        });
 
-            game.powerups.push({
-                element: el,
-                x: x,
-                y: y,
-                type: type,
-                speed: 1.5
-            });
-        }
-
-        // ================================================
-        // 4. SHOOTING
-        // ================================================
-        function shoot() {
-            if (!game.isRunning || game.shootCooldown > 0) return;
-
-            game.shootCooldown = game.maxShootCooldown;
-
-            const bullet = document.createElement('div');
-            bullet.className = 'bullet';
-            const bx = playerX + 25 - 2;
-            const by = playerY - 10;
-            bullet.style.left = bx + 'px';
-            bullet.style.top = by + 'px';
-            container.appendChild(bullet);
-
-            game.bullets.push({
-                element: bullet,
-                x: bx,
-                y: by,
-                speed: 8
-            });
-
-            // Shooting sound effect (visual)
-            player.style.filter = 'drop-shadow(0 0 40px rgba(100, 200, 255, 0.9))';
-            setTimeout(() => {
-                player.style.filter = 'drop-shadow(0 0 20px rgba(100, 200, 255, 0.6))';
-            }, 100);
-        }
-
-        // ================================================
-        // 5. EXPLOSION
-        // ================================================
-        function createExplosion(x, y, color = '#ffd700') {
-            const el = document.createElement('div');
-            el.className = 'explosion';
-            el.style.left = (x - 30) + 'px';
-            el.style.top = (y - 30) + 'px';
-            el.style.width = '60px';
-            el.style.height = '60px';
-            el.innerHTML = `
-                <svg viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="30" fill="${color}" opacity="0.8"/>
-                    <circle cx="50" cy="50" r="20" fill="#fff" opacity="0.6"/>
-                    ${Array.from({length: 12}, (_, i) => `
-                        <line x1="50" y1="50" x2="${50 + 40 * Math.cos(i * Math.PI / 6)}" 
-                              y2="${50 + 40 * Math.sin(i * Math.PI / 6)}" 
-                              stroke="${color}" stroke-width="3" opacity="0.5"/>
-                    `).join('')}
-                </svg>
-            `;
-            container.appendChild(el);
-
-            game.explosions.push({ element: el, timer: 0 });
-
-            // Screen shake effect
-            container.style.transform = 'translate(5px, -5px)';
-            setTimeout(() => {
-                container.style.transform = 'translate(-3px, 3px)';
-                setTimeout(() => {
-                    container.style.transform = 'translate(0px, 0px)';
-                }, 50);
-            }, 50);
-        }
-
-        // ================================================
-        // 6. GAME LOOP
-        // ================================================
-        function update() {
-            if (!game.isRunning) return;
-
-            // Cooldown
-            if (game.shootCooldown > 0) {
-                game.shootCooldown--;
-                cooldownBar.style.width = (game.shootCooldown / game.maxShootCooldown * 100) + '%';
-            } else {
-                cooldownBar.style.width = '100%';
+        function getCurrentLocation() {
+            if (!navigator.geolocation) {
+                alert('Trình duyệt không hỗ trợ định vị!');
+                return;
             }
 
-            // Update player position (follow mouse)
-            const rect = container.getBoundingClientRect();
-            const mouseX = game.mouseX - rect.left - 25;
-            const mouseY = game.mouseY - rect.top - 25;
+            const btn = event.target;
+            btn.textContent = '⏳ Đang tìm...';
+            btn.disabled = true;
 
-            playerX = Math.max(0, Math.min(container.clientWidth - 50, mouseX));
-            playerY = Math.max(0, Math.min(container.clientHeight - 50, mouseY));
-            player.style.left = playerX + 'px';
-            player.style.top = playerY + 'px';
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const { latitude, longitude } = position.coords;
 
-            // Auto-shoot
-            if (game.shootCooldown === 0) {
-                shoot();
-            }
+                    try {
+                        // Reverse geocode
+                        const response = await fetch(
+                            `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric`
+                        );
+                        const data = await response.json();
+                        const city = data.name;
 
-            // Spawn enemies
-            game.enemySpawnTimer++;
-            const spawnRate = Math.max(15, 60 - Math.floor(game.score / 100) * 2);
-            if (game.enemySpawnTimer >= spawnRate) {
-                game.enemySpawnTimer = 0;
-                const count = Math.min(3, 1 + Math.floor(game.score / 200));
-                for (let i = 0; i < count; i++) {
-                    setTimeout(() => spawnEnemy(), i * 100);
-                }
-            }
-
-            // Spawn powerups
-            game.powerupSpawnTimer++;
-            if (game.powerupSpawnTimer >= 400) {
-                game.powerupSpawnTimer = 0;
-                const x = Math.random() * (container.clientWidth - 40);
-                spawnPowerup(x, -40);
-            }
-
-            // Update enemies
-            for (let i = game.enemies.length - 1; i >= 0; i--) {
-                const enemy = game.enemies[i];
-                enemy.y += enemy.speed;
-                enemy.element.style.top = enemy.y + 'px';
-
-                // Enemy out of screen
-                if (enemy.y > container.clientHeight + 50) {
-                    enemy.element.remove();
-                    game.enemies.splice(i, 1);
-                    continue;
-                }
-
-                // Enemy collision with player
-                const playerCenterX = playerX + 25;
-                const playerCenterY = playerY + 25;
-                const enemyCenterX = enemy.x + enemy.width / 2;
-                const enemyCenterY = enemy.y + enemy.height / 2;
-                const dist = Math.hypot(playerCenterX - enemyCenterX, playerCenterY - enemyCenterY);
-
-                if (dist < 35) {
-                    // Player hit
-                    createExplosion(enemyCenterX, enemyCenterY, '#ff4757');
-                    enemy.element.remove();
-                    game.enemies.splice(i, 1);
-                    game.lives--;
-                    game.combo = 0;
-                    updateUI();
-
-                    if (game.lives <= 0) {
-                        gameOver();
-                        return;
-                    }
-                    continue;
-                }
-
-                // Enemy collision with bullets
-                for (let j = game.bullets.length - 1; j >= 0; j--) {
-                    const bullet = game.bullets[j];
-                    const bulletCenterX = bullet.x + 2;
-                    const bulletCenterY = bullet.y + 8;
-
-                    if (Math.abs(bulletCenterX - enemyCenterX) < enemy.width / 2 + 4 &&
-                        Math.abs(bulletCenterY - enemyCenterY) < enemy.height / 2 + 8) {
-                        // Hit!
-                        bullet.element.remove();
-                        game.bullets.splice(j, 1);
-
-                        enemy.hp--;
-                        if (enemy.hp <= 0) {
-                            createExplosion(enemyCenterX, enemyCenterY, '#ffd700');
-                            enemy.element.remove();
-                            game.enemies.splice(i, 1);
-
-                            // Score + combo
-                            game.score += 10 + game.combo * 2;
-                            game.combo++;
-                            if (game.combo > game.maxCombo) game.maxCombo = game.combo;
-
-                            // Combo display
-                            if (game.combo >= 3) {
-                                comboValue.textContent = game.combo;
-                                comboElement.classList.add('show');
-                                clearTimeout(comboElement._hideTimer);
-                                comboElement._hideTimer = setTimeout(() => {
-                                    comboElement.classList.remove('show');
-                                }, 1500);
-                            }
-
-                            // Bonus powerup
-                            if (Math.random() > 0.85) {
-                                spawnPowerup(enemy.x, enemy.y);
-                            }
-
-                            updateUI();
+                        if (map) {
+                            map.setView([latitude, longitude], 10);
+                            addMarker(latitude, longitude, city);
                         } else {
-                            // Enemy flashes when hit
-                            enemy.element.style.opacity = '0.3';
-                            setTimeout(() => {
-                                enemy.element.style.opacity = '1';
-                            }, 100);
+                            initMap(latitude, longitude);
                         }
-                        break;
+
+                        await updateWeather(city);
+                        btn.textContent = '📍 Vị trí của tôi';
+                        btn.disabled = false;
+
+                    } catch (error) {
+                        alert('Không thể lấy thông tin thành phố!');
+                        btn.textContent = '📍 Vị trí của tôi';
+                        btn.disabled = false;
                     }
+                },
+                (error) => {
+                    alert('Không thể lấy vị trí! Vui lòng cho phép truy cập vị trí.');
+                    btn.textContent = '📍 Vị trí của tôi';
+                    btn.disabled = false;
+                }
+            );
+        }
+
+        // ============================================================
+        // 6. MAP CONTROLS
+        // ============================================================
+        function zoomIn() {
+            if (map) map.zoomIn();
+        }
+
+        function zoomOut() {
+            if (map) map.zoomOut();
+        }
+
+        function resetMapView() {
+            if (map && currentCity) {
+                updateWeather(currentCity);
+            }
+        }
+
+        function toggleWindLayer() {
+            showWind = !showWind;
+            const btn = document.getElementById('toggleWindLayer');
+            btn.classList.toggle('active');
+
+            if (showWind) {
+                addWindLayer();
+            } else {
+                if (windLayer) {
+                    map.removeLayer(windLayer);
+                    windLayer = null;
                 }
             }
+        }
 
-            // Update bullets
-            for (let i = game.bullets.length - 1; i >= 0; i--) {
-                const bullet = game.bullets[i];
-                bullet.y -= bullet.speed;
-                bullet.element.style.top = bullet.y + 'px';
+        function toggleTempLayer() {
+            showTemp = !showTemp;
+            const btn = document.getElementById('toggleTempLayer');
+            btn.classList.toggle('active');
 
-                if (bullet.y < -20) {
-                    bullet.element.remove();
-                    game.bullets.splice(i, 1);
-                }
-            }
-
-            // Update powerups
-            for (let i = game.powerups.length - 1; i >= 0; i--) {
-                const p = game.powerups[i];
-                p.y += p.speed;
-                p.element.style.top = p.y + 'px';
-
-                if (p.y > container.clientHeight + 50) {
-                    p.element.remove();
-                    game.powerups.splice(i, 1);
-                    continue;
+            // Simulated temperature overlay
+            if (showTemp) {
+                // Add a simple heatmap simulation
+                if (tempLayer) {
+                    map.removeLayer(tempLayer);
+                    tempLayer = null;
                 }
 
-                // Powerup collision with player
-                const pCenterX = p.x + 20;
-                const pCenterY = p.y + 20;
-                const distP = Math.hypot(playerCenterX - pCenterX, playerCenterY - pCenterY);
+                // Create a semi-transparent overlay with temperature colors
+                const canvas = document.createElement('canvas');
+                canvas.width = 200;
+                canvas.height = 200;
 
-                if (distP < 40) {
-                    p.element.remove();
-                    game.powerups.splice(i, 1);
+                tempLayer = L.canvasLayer({
+                    draw: function() {
+                        const ctx = this.canvas.getContext('2d');
+                        const size = this.canvas.width;
+                        ctx.clearRect(0, 0, size, size);
 
-                    // Powerup effects
-                    if (p.type === '⚡') {
-                        game.score += 50;
-                        createExplosion(pCenterX, pCenterY, '#00d2ff');
-                    } else if (p.type === '💎') {
-                        game.score += 100;
-                        createExplosion(pCenterX, pCenterY, '#ff6b6b');
-                    } else if (p.type === '⭐') {
-                        game.lives = Math.min(5, game.lives + 1);
-                        createExplosion(pCenterX, pCenterY, '#ffd700');
+                        // Draw gradient circles simulating temperature
+                        const bounds = map.getBounds();
+                        const centerLat = (bounds.getNorth() + bounds.getSouth()) / 2;
+                        const centerLng = (bounds.getEast() + bounds.getWest()) / 2;
+
+                        for (let i = 0; i < 12; i++) {
+                            const lat = bounds.getSouth() + Math.random() * (bounds.getNorth() - bounds.getSouth());
+                            const lng = bounds.getWest() + Math.random() * (bounds.getEast() - bounds.getWest());
+
+                            const x = (lng - bounds.getWest()) / (bounds.getEast() - bounds.getWest()) * size;
+                            const y = (bounds.getNorth() - lat) / (bounds.getNorth() - bounds.getSouth()) * size;
+
+                            const radius = 20 + Math.random() * 30;
+                            const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                            const hue = 200 + Math.random() * 40;
+                            gradient.addColorStop(0, `hsla(${hue}, 80%, 60%, 0.15)`);
+                            gradient.addColorStop(0.5, `hsla(${hue + 20}, 80%, 50%, 0.08)`);
+                            gradient.addColorStop(1, `hsla(${hue + 40}, 80%, 40%, 0)`);
+
+                            ctx.beginPath();
+                            ctx.arc(x, y, radius, 0, Math.PI * 2);
+                            ctx.fillStyle = gradient;
+                            ctx.fill();
+                        }
                     }
-                    updateUI();
+                });
+
+                tempLayer.addTo(map);
+
+                // Animate temp layer
+                function animateTemp() {
+                    if (!showTemp) return;
+                    if (tempLayer) {
+                        tempLayer.redraw();
+                    }
+                    setTimeout(animateTemp, 2000);
+                }
+                animateTemp();
+
+            } else {
+                if (tempLayer) {
+                    map.removeLayer(tempLayer);
+                    tempLayer = null;
                 }
             }
-
-            // Remove expired explosions
-            for (let i = game.explosions.length - 1; i >= 0; i--) {
-                game.explosions[i].timer++;
-                if (game.explosions[i].timer > 20) {
-                    game.explosions[i].element.remove();
-                    game.explosions.splice(i, 1);
-                }
-            }
-
-            requestAnimationFrame(update);
         }
 
-        // ================================================
-        // 7. UI UPDATE
-        // ================================================
-        function updateUI() {
-            scoreElement.textContent = game.score;
-            livesElement.textContent = '❤️'.repeat(Math.max(0, game.lives));
-        }
-
-        // ================================================
-        // 8. GAME OVER
-        // ================================================
-        function gameOver() {
-            game.isRunning = false;
-            game.isGameOver = true;
-            finalScoreElement.textContent = game.score;
-            gameOverElement.classList.add('show');
-
-            // Big explosion
-            createExplosion(container.clientWidth / 2, container.clientHeight / 2, '#ff4757');
-            setTimeout(() => {
-                createExplosion(container.clientWidth / 2 - 100, container.clientHeight / 2 - 50, '#ffd700');
-            }, 200);
-            setTimeout(() => {
-                createExplosion(container.clientWidth / 2 + 100, container.clientHeight / 2 + 50, '#ff6b6b');
-            }, 400);
-        }
-
-        // ================================================
-        // 9. RESTART
-        // ================================================
-        function restartGame() {
-            // Remove all entities
-            document.querySelectorAll('.enemy, .bullet, .powerup, .explosion').forEach(el => el.remove());
-
-            game.score = 0;
-            game.lives = 3;
-            game.combo = 0;
-            game.maxCombo = 0;
-            game.isRunning = true;
-            game.isGameOver = false;
-            game.enemies = [];
-            game.bullets = [];
-            game.powerups = [];
-            game.explosions = [];
-            game.enemySpawnTimer = 0;
-            game.powerupSpawnTimer = 0;
-            game.shootCooldown = 0;
-
-            gameOverElement.classList.remove('show');
-            comboElement.classList.remove('show');
-            updateUI();
-            cooldownBar.style.width = '100%';
-
-            playerX = container.clientWidth / 2 - 25;
-            playerY = container.clientHeight - 100;
-            player.style.left = playerX + 'px';
-            player.style.top = playerY + 'px';
-
-            // Start game loop again
-            if (game.loopId) cancelAnimationFrame(game.loopId);
-            game.loopId = requestAnimationFrame(update);
-        }
-
-        // ================================================
-        // 10. EVENT LISTENERS
-        // ================================================
-        // Mouse movement
-        container.addEventListener('mousemove', (e) => {
-            const rect = container.getBoundingClientRect();
-            game.mouseX = e.clientX;
-            game.mouseY = e.clientY;
+        // ============================================================
+        // 7. AUTO-LOAD & INIT
+        // ============================================================
+        // Load default city on start
+        window.addEventListener('load', () => {
+            updateWeather('Hanoi');
         });
 
-        container.addEventListener('mouseleave', () => {
-            // Center player when mouse leaves
-            game.mouseX = container.getBoundingClientRect().left + container.clientWidth / 2;
-            game.mouseY = container.getBoundingClientRect().top + container.clientHeight - 50;
-        });
-
-        // Click to shoot (manual)
-        container.addEventListener('click', () => {
-            if (game.isRunning && game.shootCooldown === 0) {
-                shoot();
-            }
-        });
-
-        // Restart
-        restartBtn.addEventListener('click', restartGame);
-
-        // Keyboard support
-        document.addEventListener('keydown', (e) => {
-            if (e.key === ' ' || e.key === 'Space') {
-                e.preventDefault();
-                if (game.isRunning && game.shootCooldown === 0) {
-                    shoot();
-                }
-                if (game.isGameOver) {
-                    restartGame();
-                }
-            }
-            if (e.key === 'r' || e.key === 'R') {
-                if (game.isGameOver) restartGame();
-            }
-        });
-
-        // Prevent context menu
-        container.addEventListener('contextmenu', (e) => e.preventDefault());
-
-        // ================================================
-        // 11. START GAME
-        // ================================================
-        // Initial setup
-        playerX = container.clientWidth / 2 - 25;
-        playerY = container.clientHeight - 100;
-        player.style.left = playerX + 'px';
-        player.style.top = playerY + 'px';
-        updateUI();
-
-        // Start game loop
-        game.loopId = requestAnimationFrame(update);
-
-        // Spawn initial enemies
-        setTimeout(() => spawnEnemy(), 500);
-        setTimeout(() => spawnEnemy(), 1000);
-        setTimeout(() => spawnEnemy(), 1500);
-
-        // ================================================
-        // 12. RESIZE HANDLER
-        // ================================================
+        // Handle resize for map
         window.addEventListener('resize', () => {
-            // Keep player in bounds
-            const maxX = container.clientWidth - 50;
-            const maxY = container.clientHeight - 50;
-            playerX = Math.max(0, Math.min(maxX, playerX));
-            playerY = Math.max(0, Math.min(maxY, playerY));
-            player.style.left = playerX + 'px';
-            player.style.top = playerY + 'px';
+            if (map) {
+                setTimeout(() => map.invalidateSize(), 300);
+            }
         });
 
-        console.log('🚀 SPACE SHOOTER loaded!');
-        console.log('🎯 Click/space to shoot');
-        console.log('⌨️ Press R to restart');
+        console.log('🌤️ WeatherHub loaded!');
+        console.log('📍 Tìm kiếm thành phố để xem thời tiết + map');
+        console.log('💨 Bật/tắt lớp gió và nhiệt độ trên map');
+        console.log('🕐 Đồng hồ hiển thị thời gian thực');
     </script>
-
 </body>
 </html>
